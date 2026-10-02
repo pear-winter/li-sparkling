@@ -6,6 +6,7 @@ const defaults = [
  ['neon','霓虹'],['pear','梨梨与黄绿'],[ungrouped,'未分组'],
 ].map(([id,name])=>({id,name}));
 function automatic(pack){
+ if(pack.motion==='pixel-text')return 'pear';
  if(pack.id==='lili-gold-stars'||pack.motion==='glitter'||pack.id==='lili-mono-stars'||pack.id==='lili-stars')return 'stars';
  if(pack.motion==='blossom')return 'flowers';
  if(pack.motion==='fountain')return 'hearts';
@@ -40,3 +41,4 @@ export function createGroups(saved, save){
   remove(id,packs){if(id===ungrouped)throw Error('未分组不能删除。');if(!api.has(id))throw Error('分组不存在。');const assignments={...state.assignments};for(const key of Object.keys(assignments))if(assignments[key]===id)assignments[key]=ungrouped;for(const p of packs)if(api.of(p)===id)assignments[p.id]=ungrouped;commit({...state,groups:state.groups.filter(g=>g.id!==id),assignments});},
  };return api;
 }
+
