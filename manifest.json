@@ -1,0 +1,16 @@
+{
+  "display_name": "梨梨 · 点击与拖尾特效",
+  "loading_order": 50,
+  "requires": [],
+  "optional": [],
+  "js": "index.js",
+  "author": "梨梨 · pear-winter",
+  "version": "2.0.0",
+  "homePage": "https://github.com/pear-winter/li-sparkling",
+  "auto_update": true,
+  "hooks": {
+    "enable": "onEnable",
+    "disable": "onDisable",
+    "delete": "onDelete"
+  }
+}

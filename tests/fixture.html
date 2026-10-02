@@ -1,0 +1,5 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>梨梨特效 · 本地验证</title>
+<style>body{margin:0;background:#f8eef2;color:#5a424c;font:16px sans-serif}main{max-width:700px;margin:28px auto;padding:20px}button{padding:12px;margin:8px}#chat{height:160px;background:white;border-radius:12px;padding:20px}#extensions_settings2,#extensionsMenu{padding:12px}#extensions_settings{display:none}iframe{width:240px;height:90px;border:1px solid #bba}</style>
+<main><h1>梨梨 · 点击与拖尾特效</h1><div id="chat">点击这里，或打开特效管理器。<button id="underlay">点我</button></div><div id="extensions_settings"></div><div id="extensions_settings2"></div><div id="extensionsMenu"></div><iframe srcdoc="<body style='background:#fff4f8'>同源聊天卡片<button>点我</button></body>"></iframe></main>
+<script type="module">import * as extension from '/index.js';window.extension=extension;window.underlayHits=0;document.querySelector('#underlay').onclick=()=>window.underlayHits++;</script>
+</html>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="160" height="160"><g transform="rotate(0 50 50)"><defs>
+    <radialGradient id="film" cx=".38" cy=".3" r=".68"><stop stop-color="#e2faff" stop-opacity=".01"/><stop offset=".72" stop-color="#fff" stop-opacity=".015"/><stop offset=".92" stop-color="#c9d8ff" stop-opacity=".09"/><stop offset="1" stop-color="#fce1ff" stop-opacity=".2"/></radialGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2=".85" y2="1"><stop stop-color="#87f6ff"/><stop offset=".24" stop-color="#e6afff"/><stop offset=".44" stop-color="#ff8dbd"/><stop offset=".62" stop-color="#ffdb83"/><stop offset=".78" stop-color="#b2fff0"/><stop offset="1" stop-color="#b0c8ff"/></linearGradient>
+    <linearGradient id="pink"><stop stop-color="#ff8bbe" stop-opacity="0"/><stop offset=".45" stop-color="#ff9ddc" stop-opacity=".9"/><stop offset="1" stop-color="#ffdc7d" stop-opacity=".05"/></linearGradient>
+    <linearGradient id="blue"><stop stop-color="#93ffeb" stop-opacity=".05"/><stop offset=".5" stop-color="#94f5ff" stop-opacity=".9"/><stop offset="1" stop-color="#c6b0ff" stop-opacity="0"/></linearGradient>
+    </defs>
+    <circle cx="50" cy="50" r="42" fill="url(#film)"/>
+    <circle cx="50" cy="50" r="42" fill="none" stroke="url(#rim)" stroke-width=".72" opacity=".78"/>
+    <path d="M13 39C19 10 57 1 79 23C59 10 30 11 13 39Z" fill="url(#pink)"/>
+    <path d="M17 36C31 13 59 8 77 24C51 13 36 21 17 36Z" fill="url(#blue)"/>
+    <path d="M88 58C82 85 52 100 26  80 C54 92  70 83 88 58Z" fill="url(#blue)"/>
+    <path d="M82 76C67 91 39 94 22 77C44 88  60 88 82 76Z" fill="url(#pink)"/>
+    <path d="M12  40 C13 27 24 17 34 14M40 11L48 10M65 88Q76 84 81 77" fill="none" stroke="#ffffff" stroke-width="1.1" stroke-linecap="round" opacity=".86"/>
+    <ellipse cx="23" cy="25" rx="3.4" ry="1.6" fill="#fff" opacity=".87" transform="rotate(-42 23 25)"/>
+    <ellipse cx="84" cy="67" rx="1" ry="2.2" fill="#fff" opacity=".78"/>
+    </g></svg>
