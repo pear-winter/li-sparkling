@@ -38,3 +38,23 @@ export function drawRipple(ctx,p,now){
  }
  ctx.restore();
 }
+
+ripplePacks.push(...[
+ {id:'lili-wave-white',name:'白水面 · 中心扩散',colors:['#ffffff','#d9efff']},
+ {id:'lili-wave-blue',name:'深蓝水面 · 中心扩散',colors:['#174580','#9acbff']},
+].map(p=>({...p,motion:'wave',images:[],count:6,size:68,duration:2400,spread:120,lift:0,shape:'circle',glow:0})));
+export function spawnWaves(pack,x,y,amount,now,scale,lightweight){
+ return [{kind:'wave',x,y,start:now,duration:pack.duration,radius:pack.size*1.8*scale,scale,colors:pack.colors,rings:lightweight?3:5}];
+}
+export function drawWave(ctx,p,now){
+ const t=(now-p.start)/p.duration;if(t<0||t>=1)return;
+ ctx.save();ctx.translate(p.x,p.y);ctx.lineCap='round';
+ for(let i=0;i<p.rings;i++){
+  const q=(t-i*.085)/(1-i*.085);if(q<0||q>=1)continue;
+  const r=(2+p.radius*(1-Math.pow(1-q,1.4))),fade=Math.min(1,q/.035)*Math.pow(1-q,1.25);
+  ctx.globalAlpha=fade;ctx.strokeStyle=p.colors[0];ctx.lineWidth=(2.8-i*.25)*p.scale;ctx.shadowColor=p.colors[1];ctx.shadowBlur=3*p.scale;
+  ctx.beginPath();ctx.ellipse(0,0,r,r*.48,0,0,Math.PI*2);ctx.stroke();
+  ctx.shadowBlur=0;ctx.strokeStyle=p.colors[1];ctx.lineWidth=1.15*p.scale;
+  for(let j=0;j<3;j++){const a=j*2.1+i*.36+q*.15;ctx.beginPath();ctx.ellipse(0,0,r+.8*p.scale,r*.48+.6*p.scale,0,a,a+1.05);ctx.stroke();}
+ }ctx.restore();
+}

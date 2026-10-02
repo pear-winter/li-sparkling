@@ -20,9 +20,9 @@ try{
  await page.evaluate(()=>{window.__liliPixelV2={mount(){throw Error('Do not use legacy engine');}};});
  await page.getByRole('button',{name:'重新连接'}).click();assert.equal(await page.locator('.lpx-manager').count(),0);
  await page.evaluate(async()=>{window.extension=await import('/index.js');});
- await page.locator('.lpx-embedded').waitFor();assert.equal(await page.locator('.lpx-card').count(),23);
+ await page.locator('.lpx-embedded').waitFor();assert.equal(await page.locator('.lpx-card').count(),31);
  assert.equal(await page.locator('.lpx-close').count(),0,'embedded view uses workbench navigation');
- await page.getByRole('combobox',{name:'选择特效分组'}).selectOption('rain');assert.equal(await page.locator('.lpx-card').count(),2);
+ await page.getByRole('combobox',{name:'选择特效分组'}).selectOption('rain');assert.equal(await page.locator('.lpx-card').count(),4);
  await page.getByRole('tab',{name:'03 · 设置'}).click();await page.getByRole('slider',{name:'粒子大小',exact:true}).fill('1.7');
  await page.evaluate(()=>{window.connectedInstance=window.__liSparkling;window.bridge.close();});
  assert.equal(await page.evaluate(()=>window.connectedInstance===window.__liSparkling&&window.__liSparkling.isAvailable()),true);
@@ -41,7 +41,7 @@ try{
   const frame=page.frameLocator('#helper-frame');await frame.locator('body').waitFor({state:'attached'});const child=await (await page.locator('#helper-frame').elementHandle()).contentFrame();await child.addScriptTag({content:data.content});
   assert.equal(await page.evaluate(()=>window.__liSparkling===window.beforeWorkbench),true,'full workbench must not replace plugin');
   await page.locator('#cw-fab').click();await page.locator('#pear-effects-plugin-panel .lpx-embedded').waitFor();
-  await page.getByRole('combobox',{name:'选择特效分组'}).selectOption('rain');assert.equal(await page.locator('.lpx-card').count(),2);
+  await page.getByRole('combobox',{name:'选择特效分组'}).selectOption('rain');assert.equal(await page.locator('.lpx-card').count(),4);
   await mkdir('/tmp/lili-workbench-test',{recursive:true});await page.screenshot({path:'/tmp/lili-workbench-test/embedded.png'});
   await page.evaluate(()=>window.__cyll_pear_hub_v1__.dispose());assert.equal(await page.evaluate(()=>window.__liSparkling===window.beforeWorkbench&&window.__liSparkling.isAvailable()),true);
  }

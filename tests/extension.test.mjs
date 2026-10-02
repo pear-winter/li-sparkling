@@ -22,18 +22,40 @@ const errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.goto(url);await page.waitForFunction(()=>window.__liliPixelV2?.getDiagnostics().canvasReady);
  await page.locator('#lpx-panel button').click();
- assert.equal(await page.locator('.lpx-card').count(),23,'23 builtins');
+ assert.equal(await page.locator('.lpx-card').count(),31,'31 builtins');
  assert.equal(await page.evaluate(()=>document.querySelector('dialog').scrollWidth<=document.querySelector('dialog').clientWidth),true,'no horizontal overflow');
  // Load all textures independently; a single broken SVG/WebP must fail the test.
  const assets=await page.evaluate(async()=>{const {ASSETS,butterflyPacks}=await import('/assets.js');const {seasonalPacks}=await import('/seasonal.js');const srcs=[...new Set([...Object.values(ASSETS),...[...butterflyPacks,...seasonalPacks].flatMap(p=>p.images)])];await Promise.all(srcs.map(src=>{const img=new Image();img.src=src;return img.decode();}));return srcs.length;});
  assert.equal(assets,86);
  // Every mode renders and remains bounded under repeated input.
- for(const id of ['lili-bf-white','lili-snow-black','lili-snow-white','lili-music-black','lili-music-white','lili-ripple-white','lili-ripple-blue','lili-bubble-rainbow']){
+ for(const id of ['lili-bf-pink-white','lili-bf-pink-black','lili-bf-pear-yellow','lili-wave-white','lili-wave-blue','lili-heart-fountain','lili-gold-stars','lili-blue-flowers','lili-bf-white','lili-snow-black','lili-snow-white','lili-music-black','lili-music-white','lili-ripple-white','lili-ripple-blue','lili-bubble-rainbow']){
   await page.locator(`[data-effect-id="${id}"] .lpx-thumb`).click();
   await page.waitForTimeout(180);
   const diag=await page.evaluate(()=>window.__liliPixelV2.getDiagnostics());
   assert.equal(diag.pack,id);assert(diag.particles>0&&diag.particles<=160);assert(diag.images.every(x=>x.ready&&!x.error));
  }
+ // Centered diffusion must never scatter its origins, even at max density.
+ const centers=await page.evaluate(async()=>{const {ripplePacks,spawnWaves}=await import('/ripples.js');return spawnWaves(ripplePacks.find(p=>p.motion==='wave'),117,239,14,0,2,false).map(p=>[p.x,p.y]);});
+ assert.deepEqual(centers,[[117,239]]);
+ // New motion and paired colors survive portable export/import.
+ for(const id of ['lili-wave-white','lili-heart-fountain','lili-gold-stars','lili-blue-flowers','lili-bf-pear-yellow']){
+  await page.locator(`[data-effect-id="${id}"] .lpx-thumb`).click();const pack=await page.evaluate(()=>window.__liSparkling.exportPack());
+  assert.equal(await page.evaluate(d=>window.__liSparkling.importPacks(d),pack),1);
+  if(id==='lili-bf-pear-yellow'){assert(pack.packs[0].paired);assert(pack.packs[0].hues.every(h=>h===0));assert(pack.packs[0].images.every(s=>s.startsWith('data:image/png;base64,')));}
+ }
+ await page.getByRole('tab',{name:'02 · 拖尾'}).click();assert.equal(await page.locator('[data-trail-id]').count(),12);
+ await page.waitForTimeout(3600);
+ for(const id of ['bubble','stars-black','stars-white','water','hearts-pink','stars-gold','flowers-blue']){
+  await page.locator(`[data-trail-id="${id}"] .lpx-thumb`).click();
+  await page.waitForTimeout(80);
+  await page.evaluate(async()=>{for(let i=0;i<12;i++){document.body.dispatchEvent(new PointerEvent('pointermove',{clientX:80+i*10,clientY:360+Math.sin(i)*12,pointerType:'mouse',isPrimary:true,bubbles:true}));await new Promise(r=>setTimeout(r,20));}});
+  const live=await page.evaluate(()=>{const d=window.__liSparkling.getDiagnostics();const c=document.querySelector('#lpx-canvas-layer canvas');return {...d,ink:c.getContext('2d').getImageData(0,0,c.width,c.height).data.some((v,i)=>i%4===3&&v>0)};});
+  assert.equal(live.trail,id);assert(live.trails>0&&live.trails<=80);assert(live.ink);
+ }
+ await page.evaluate(async()=>{const target=document.body;for(let i=0;i<8;i++){const touch=new Touch({identifier:7,target,clientX:60+i*12,clientY:350});target.dispatchEvent(new TouchEvent(i?'touchmove':'touchstart',{touches:[touch],changedTouches:[touch],bubbles:true}));await new Promise(r=>setTimeout(r,35));}target.dispatchEvent(new TouchEvent('touchend',{touches:[],changedTouches:[new Touch({identifier:7,target})],bubbles:true}));});
+ assert((await page.evaluate(()=>window.__liSparkling.getDiagnostics().trails))>0,'mobile touch emits new trail');
+ await page.waitForTimeout(3800);assert.equal(await page.evaluate(()=>window.__liSparkling.getDiagnostics().trails),0);
+ await page.getByRole('tab',{name:'01 · 点击'}).click();
  await page.locator('.lpx-input[type=search]').fill('雪花');
  assert.equal(await page.locator('.lpx-card').count(),2);
  await page.waitForTimeout(3600);await page.screenshot({path:path.join(artifacts,'mobile-snow.png')});
@@ -70,8 +92,8 @@ try{
  await page.getByRole('tab',{name:'03 · 设置'}).click();assert.equal(await page.getByRole('slider',{name:'粒子大小',exact:true}).inputValue(),'1.6');
  await page.getByRole('tab',{name:'01 · 点击'}).click();
  const groupFilter=page.getByRole('combobox',{name:'选择特效分组'});
- await groupFilter.selectOption('butterflies');assert.equal(await page.locator('.lpx-card').count(),6);
- await groupFilter.selectOption('rain');assert.equal(await page.locator('.lpx-card').count(),2);
+ await groupFilter.selectOption('butterflies');assert.equal(await page.locator('.lpx-card').count(),9);
+ await groupFilter.selectOption('rain');assert.equal(await page.locator('.lpx-card').count(),4);
  await page.locator('.lpx-group-editor summary').click();await page.getByRole('textbox',{name:'分组名称'}).fill('雨夜收藏');await page.getByRole('button',{name:'新建分组',exact:true}).click();
  const newGroup=await groupFilter.inputValue();assert(newGroup.startsWith('group-'));assert.equal(await page.locator('.lpx-card').count(),0);
  await groupFilter.selectOption('all');await page.getByRole('combobox',{name:'移动 白雨 · 落水涟漪 到分组',exact:true}).selectOption(newGroup);
@@ -95,5 +117,5 @@ try{
  });
  await page.screenshot({path:path.join(artifacts,'builtin-preview.png'),fullPage:true});
  assert.deepEqual(errors,[]);
- console.log(`PASS: 23 builtins + groups + ripples + petal retirement; ${assets} local assets; mobile layout; 5 animation modes; export/import; legacy settings; menu recovery; touch/iframe; trails; lifecycle.\nArtifacts: ${artifacts}`);
+ console.log(`PASS: 31 builtins + groups + ripples + petal retirement; ${assets} local assets; mobile layout; new click/trail modes; centered diffusion; portable paired colors; export/import; legacy settings; menu recovery; touch/iframe; trails; lifecycle.\nArtifacts: ${artifacts}`);
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}

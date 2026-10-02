@@ -177,3 +177,13 @@ export const butterflyPacks = [
     "motion": "flutter"
   }
 ].map(pack => ({...pack, images: pack.images.map(asset)}));
+
+// Alternating source pairs ensure that every burst includes both butterfly colors.
+for(const [id,name,a,b,hue,colors] of [
+ ['pink-white','粉白双蝶 · 轻舞','pink','white',0,['#ffa5ce','#ffffff']],
+ ['pink-black','粉黑双蝶 · 轻舞','pink','black',0,['#ffa5ce','#151515']],
+ ['pear-yellow','梨绿黄双蝶 · 轻舞','pear','pear',-18,['#a9dc65','#ffe66d']],
+]){
+ const left=butterflyPacks.find(p=>p.id==='lili-bf-'+a),right=butterflyPacks.find(p=>p.id==='lili-bf-'+b);
+ butterflyPacks.push({...left,id:'lili-bf-'+id,name,colors,paired:true,images:Array.from({length:12},(_,i)=>(i%2?right:left).images[i]),hues:Array.from({length:12},(_,i)=>i%2?hue:0)});
+}
