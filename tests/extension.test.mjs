@@ -34,6 +34,15 @@ try{
   const diag=await page.evaluate(()=>window.__liliPixelV2.getDiagnostics());
   assert.equal(diag.pack,id);assert(diag.particles>0&&diag.particles<=160);assert(diag.images.every(x=>x.ready&&!x.error));
  }
+ // Flat silhouettes must have one solid interior color; gold is an exact preset recolor.
+ const flat=await page.evaluate(async()=>{
+  const {drawMotif,ornamentPacks,monochromeStars}=await import('/ornaments.js');
+  const strip=p=>{const {id,name,colors,...rest}=p;return rest;};
+  const results=['heart','flower','gold','star'].map(motif=>{const c=document.createElement('canvas');c.width=c.height=180;const cx=c.getContext('2d');cx.translate(90,90);drawMotif(cx,motif,120,'#72a9e2');const data=cx.getImageData(0,0,180,180).data;let filled=0,wrong=0;for(let i=0;i<data.length;i+=4)if(data[i+3]===255){filled++;if(data[i]!==114||data[i+1]!==169||data[i+2]!==226)wrong++;}return {motif,filled,wrong};});
+  return {results,gold:strip(ornamentPacks.find(p=>p.id==='lili-gold-stars')),mono:strip(monochromeStars)};
+ });
+ assert.deepEqual(flat.gold,flat.mono,'gold only changes ID, name and colors');
+ for(const p of flat.results){assert(p.filled>500,p.motif+' visible silhouette');assert.equal(p.wrong,0,p.motif+' solid fill without gradient/highlight');}
  // Centered diffusion must never scatter its origins, even at max density.
  const centers=await page.evaluate(async()=>{const {ripplePacks,spawnWaves}=await import('/ripples.js');return spawnWaves(ripplePacks.find(p=>p.motion==='wave'),117,239,14,0,2,false).map(p=>[p.x,p.y]);});
  assert.deepEqual(centers,[[117,239]]);

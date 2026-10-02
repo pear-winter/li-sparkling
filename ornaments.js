@@ -1,27 +1,35 @@
 // Code-drawn artwork: transparent, resolution independent, no emoji substitution.
+export const monochromeStars = {id:'lili-mono-stars',name:'黑白 · 星屑',images:[],colors:['#171717','#ffffff','#bbbbbb'],count:10,size:10,duration:1100,spread:100,lift:45,shape:'star',glow:0};
+export function drawStar(ctx,size){
+ ctx.beginPath();for(let i=0;i<8;i++){const a=i*Math.PI/4-Math.PI/2,r=size/2*(i%2?.28:1);i?ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r):ctx.moveTo(Math.cos(a)*r,Math.sin(a)*r);}ctx.closePath();ctx.fill();
+}
 export const ornamentPacks = [
- {id:'lili-heart-fountain',name:'粉色爱心 · 呼啦啦上冒',motion:'fountain',colors:['#ff87b5','#ffbad4','#ff5f9b'],size:22,lift:180,spread:75},
- {id:'lili-gold-stars',name:'金闪闪 · 小星星',motion:'glitter',colors:['#ffc83d','#ffed9b','#d99a20'],size:15,lift:55,spread:115},
- {id:'lili-blue-flowers',name:'蓝色小花 · 轻轻飘游',motion:'blossom',colors:['#6cafff','#b4dfff','#4383e5'],size:23,lift:65,spread:120},
+ {id:'lili-heart-fountain',name:'粉色爱心 · 呼啦啦上冒',motion:'fountain',colors:['#f49cbd'],size:22,lift:180,spread:75},
+ {id:'lili-blue-flowers',name:'蓝色小花 · 轻轻飘游',motion:'blossom',colors:['#72a9e2'],size:23,lift:65,spread:120},
 ].map(p=>({...p,images:[],count:12,duration:2300,shape:'star',glow:0}));
+// Exact recolor of the existing monochrome preset, including movement and size.
+ornamentPacks.splice(1,0,{...monochromeStars,id:'lili-gold-stars',name:'金闪闪 · 星屑',colors:['#e6b43e','#f4cc65','#c9952b']});
 export const ornamentTrails = [
  {id:'bubble',name:'透明泡泡 · 薄光拖尾',motif:'bubble',colors:['#c3edff','#ffd6ee','#fff3c6']},
  {id:'stars-black',name:'黑色碎星 · 闪闪拖尾',motif:'star',colors:['#111111','#292929','#080808']},
  {id:'stars-white',name:'白色碎星 · 闪闪拖尾',motif:'star',colors:['#ffffff','#e7efff','#ffffff']},
  {id:'water',name:'水面涟漪 · 扩散拖尾',motif:'wave',colors:['#edf8ff','#9ecfff','#ffffff']},
- {id:'hearts-pink',name:'粉色爱心 · 上浮拖尾',motif:'heart',colors:['#ff87b5','#ffbad4','#ff5f9b']},
- {id:'stars-gold',name:'金闪闪 · 小星星拖尾',motif:'gold',colors:['#ffc83d','#ffed9b','#d99a20']},
- {id:'flowers-blue',name:'蓝色小花 · 飘游拖尾',motif:'flower',colors:['#6cafff','#b4dfff','#4383e5']},
+ {id:'hearts-pink',name:'粉色爱心 · 上浮拖尾',motif:'heart',colors:['#f49cbd']},
+ {id:'stars-gold',name:'金闪闪 · 星屑拖尾',motif:'gold',colors:['#e6b43e','#f4cc65','#c9952b']},
+ {id:'flowers-blue',name:'蓝色小花 · 飘游拖尾',motif:'flower',colors:['#72a9e2']},
 ].map(p=>({...p,glow:0}));
 export const motifFor = motion => ({fountain:'heart',glitter:'gold',blossom:'flower'})[motion];
 export function drawMotif(ctx,motif,size,color,phase=0){
  ctx.save();ctx.scale(size/24,size/24);ctx.fillStyle=color;
  if(motif==='heart'){
-  const g=ctx.createLinearGradient(-6,-10,8,10);g.addColorStop(0,'#ffe1ed');g.addColorStop(.4,color);g.addColorStop(1,'#f45591');ctx.fillStyle=g;
   ctx.beginPath();ctx.moveTo(0,10);ctx.bezierCurveTo(-19,-2,-10,-16,0,-6);ctx.bezierCurveTo(10,-16,19,-2,0,10);ctx.fill();
  }else if(motif==='flower'){
-  for(let i=0;i<5;i++){ctx.save();ctx.rotate(i*Math.PI*2/5);const g=ctx.createLinearGradient(0,-12,0,0);g.addColorStop(0,'#d4eeff');g.addColorStop(.45,color);g.addColorStop(1,'#3e76ce');ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(0,-6,4.4,6.2,0,0,Math.PI*2);ctx.fill();ctx.restore();}
-  ctx.fillStyle='#fff0b0';ctx.beginPath();ctx.arc(0,0,2.4,0,Math.PI*2);ctx.fill();
+  // Fill the entire flower once so translucent petals have no overlap seams.
+  ctx.beginPath();for(let i=0;i<5;i++){ctx.save();ctx.rotate(i*Math.PI*2/5);ctx.moveTo(4.6,-6);ctx.ellipse(0,-6,4.6,6,0,0,Math.PI*2);ctx.closePath();ctx.restore();}ctx.moveTo(4,0);ctx.arc(0,0,4,0,Math.PI*2);ctx.fill();
+ }else if(motif==='pear'){
+  ctx.beginPath();ctx.moveTo(0,-10);ctx.bezierCurveTo(-5,-11,-4,-3,-8,1);ctx.bezierCurveTo(-16,13,16,13,8,1);ctx.bezierCurveTo(4,-3,5,-11,0,-10);ctx.fill();
+ }else if(motif==='leaf'){
+  ctx.beginPath();ctx.moveTo(-10,9);ctx.bezierCurveTo(-12,-5,-2,-13,10,-10);ctx.bezierCurveTo(13,2,6,11,-10,9);ctx.fill();
  }else if(motif==='bubble'){
   // Almost empty center; separate faint film and bright, broken spectral arcs.
   const g=ctx.createRadialGradient(-4,-5,1,0,0,11);g.addColorStop(0,'#e4f8ff02');g.addColorStop(.85,'#d4efff04');g.addColorStop(1,'#d6ebff20');ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,11,0,Math.PI*2);ctx.fill();
@@ -29,9 +37,7 @@ export function drawMotif(ctx,motif,size,color,phase=0){
   ['#aeeeffbb','#ffc3e699','#fff0b699','#d4c4ff99'].forEach((c,i)=>{ctx.strokeStyle=c;ctx.lineWidth=.8;ctx.beginPath();ctx.arc(0,0,10.6,i*1.57+phase,i*1.57+1+phase);ctx.stroke();});
   ctx.strokeStyle='#ffffffdd';ctx.lineWidth=1;ctx.beginPath();ctx.arc(-.4,-.4,9.3,3.55,4.45);ctx.stroke();
  }else{
-  ctx.beginPath();for(let i=0;i<10;i++){const a=i*Math.PI/5-Math.PI/2,r=i%2?4.2:11;ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}ctx.closePath();
-  if(motif==='gold'){const g=ctx.createLinearGradient(-7,-10,6,10);g.addColorStop(0,'#fff6c0');g.addColorStop(.35,color);g.addColorStop(.7,'#f4b52b');g.addColorStop(1,'#b87d15');ctx.fillStyle=g;ctx.shadowColor='#ffe290';ctx.shadowBlur=3;}
-  ctx.fill();
+  drawStar(ctx,24);
  }ctx.restore();
 }
 export function spawnOrnaments(pack,x,y,amount,now,scale,lightweight){
