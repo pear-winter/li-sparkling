@@ -7,7 +7,7 @@ function start() {
 
 const host=(()=>{let w=window;try{while(w.parent!==w&&w.parent.document){w=w.parent;if(w.document.querySelector('#chat'))return w;}}catch{}return w;})();
 const doc=host.document,KEY='__liliPixelV2';
-host.__liliPixelV1?.destroy();host[KEY]?.destroy();
+host.__liliPixelV1?.destroy?.();host[KEY]?.destroy?.();
 const abort=new host.AbortController();
 const read=k=>{try{return host.localStorage.getItem(k);}catch{return null;}};
 const write=(k,v)=>{try{host.localStorage.setItem(k,v);return true;}catch{return false;}};
@@ -269,14 +269,16 @@ function thumbnail(pack,interactive=false){const n=el(interactive?'button':'div'
  if(pack.emojis?.length)positions.forEach(([x,y,rot],i)=>{const e=el('span',null,pack.emojis[i%pack.emojis.length]);e.style.cssText=`position:absolute;left:${x}%;top:${y}%;font-size:26px;transform:translate(-50%,-50%) rotate(${rot}deg)`;n.append(e);});
  if(pack.images.length)positions.forEach(([x,y,rot],i)=>{const img=el('img');img.alt='';img.src=pack.images[i%pack.images.length];img.loading='lazy';img.style.cssText=`left:${x}%;top:${y}%;transform:translate(-50%,-50%) rotate(${rot}deg)`;if(pack.motion)styleImportant(img,{'image-rendering':'auto',width:'36px',height:'36px'});n.append(img);});
  for(let i=0;i<7;i++){const dot=el('i','lpx-thumb-dot');dot.style.cssText=`left:${12+(i*19)%78}%;top:${20+(i*23)%57}%;background:${pack.colors[i%pack.colors.length]};width:${pack.images.length?4:7}px;height:${pack.images.length?4:7}px;`;if(pack.shape==='circle')dot.style.borderRadius='50%';if(pack.shape==='diamond')dot.style.transform='rotate(45deg)';if(pack.shape==='star')dot.style.clipPath='polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%)';if(pack.glow)dot.style.boxShadow=`0 0 7px ${pack.colors[i%pack.colors.length]}`;n.append(dot);}return n;}
-function closeManager(){manager?.close();manager?.remove();manager=null;managerUI=null;}
+function closeManager(){manager?.close?.();manager?.remove();manager=null;managerUI=null;}
 function renamePack(id,name){name=String(name).trim();if(!name||name.length>60)throw Error('名称需要 1～60 个字。');const item=custom.find(x=>x.id===id);if(item){const next=custom.map(p=>p.id===id?{...p,name}:p);if(!write('lili-fx-packs-v1',JSON.stringify(next)))throw Error('保存失败，浏览器存储空间不足。');custom=next;}else{builtinNames[id]=name;write('lili-fx-names-v1',JSON.stringify(builtinNames));}}
 function deletePack(id){const p=allPacks().find(x=>x.id===id);if(!p)return;lastDeleted={pack:p,builtin:!custom.some(x=>x.id===id)&&packsDefault.some(x=>x.id===id)};if(lastDeleted.builtin){hiddenBuiltins=[...new Set([...hiddenBuiltins,id])];write('lili-fx-hidden-v1',JSON.stringify(hiddenBuiltins));}else{custom=custom.filter(x=>x.id!==id);savePacks();}if(prefs.selected===id)prefs.selected=allPacks()[0]?.id||'';if(!allPacks().length)prefs.enabled=false;persist();}
 function undoDelete(){if(!lastDeleted)return;if(lastDeleted.builtin){hiddenBuiltins=hiddenBuiltins.filter(x=>x!==lastDeleted.pack.id);write('lili-fx-hidden-v1',JSON.stringify(hiddenBuiltins));}else{if(!custom.some(p=>p.id===lastDeleted.pack.id))custom.push(lastDeleted.pack);savePacks();}prefs.selected=lastDeleted.pack.id;prefs.enabled=true;persist();lastDeleted=null;}
-function openManager(page='gallery'){
- if(typeof page!=='string')page='gallery';if(page==='upload')page='settings';if(manager?.isConnected){managerUI?.show(page);manager.focus();return;}
- const d=el('dialog','lpx-dialog lpx-manager');manager=d;d.setAttribute('aria-label','梨梨 · 点击与拖尾特效管理器');let currentPage=page,query='',editId='',groupFilter=groups.has(prefs.galleryGroup)?prefs.galleryGroup:'all';
- const header=el('div','lpx-header');header.append(el('strong',null,'点击特效管理器'),button('×',closeManager,'lpx-btn lpx-close'));header.querySelector('button').setAttribute('aria-label','关闭管理器');d.append(header);
+function openManager(page='gallery',container=null){
+ if(stopped)return null;
+ if(container&&(container.ownerDocument!==doc||typeof container.append!=='function'))throw Error('管理器容器必须位于酒馆页面中。');
+ if(typeof page!=='string')page='gallery';if(page==='upload')page='settings';if(manager?.isConnected){if(!container||manager.parentElement===container){managerUI?.show(page);manager.focus();return manager;}closeManager();}
+ const d=el(container?'section':'dialog','lpx-dialog lpx-manager');manager=d;d.setAttribute('aria-label','梨梨 · 点击与拖尾特效管理器');let currentPage=page,query='',editId='',groupFilter=groups.has(prefs.galleryGroup)?prefs.galleryGroup:'all';
+ const header=el('div','lpx-header');header.append(el('strong',null,'点击特效管理器'));if(!container){const close=button('×',closeManager,'lpx-btn lpx-close');close.setAttribute('aria-label','关闭管理器');header.append(close);}d.append(header);
  const tabs=el('div','lpx-tabs');tabs.setAttribute('role','tablist');const galleryTab=button('01 · 点击',()=>show('gallery'),'lpx-tab'),trailTab=button('02 · 拖尾',()=>show('trails'),'lpx-tab'),uploadTab=button('03 · 设置',()=>show('settings'),'lpx-tab');
  [galleryTab,trailTab,uploadTab].forEach(t=>t.setAttribute('role','tab'));tabs.append(galleryTab,trailTab,uploadTab);d.append(tabs);
  const body=el('section','lpx-page');body.setAttribute('role','tabpanel');d.append(body);const notice=el('div','lpx-notice');notice.setAttribute('role','status');d.append(notice);
@@ -359,7 +361,7 @@ function openManager(page='gallery'){
   }else body.append(el('div','lpx-upload-help','每组最多 12 张图；一次总大小不超过 8 MB。上传后可在图库里改名、删除和导出。'));
   const restore=button('恢复内置特效',()=>{hiddenBuiltins=[];builtinNames={};write('lili-fx-hidden-v1','[]');write('lili-fx-names-v1','{}');show('gallery');tell(packsDefault.length+' 组内置特效已恢复。');});body.append(restore);
  }
- listen(d,'cancel',e=>{e.preventDefault();closeManager();});doc.body.append(d);d.showModal();show(currentPage);
+ listen(d,'cancel',e=>{e.preventDefault();closeManager();});if(container){d.classList.add('lpx-embedded');container.append(d);}else{doc.body.append(d);d.showModal();}show(currentPage);return d;
 }
 function importPacks(data){if(data?.format!=='lili-click-effects'||data.version!==1||!Array.isArray(data.packs)||!data.packs.length||data.packs.length>20)throw Error('这不是 v1 格式的梨梨点击特效包。');
  const list=data.packs.map(validatePack);const next=[...custom];
@@ -419,8 +421,10 @@ listen(doc,'visibilitychange',()=>{if(!doc.hidden)recoverEntries();else{particle
 // Repair synchronously before the wand/settings drawer is opened.
 listen(doc,'pointerdown',e=>{if(e.target?.closest?.('#extensionsMenuButton,#extensions-settings-button,#extensionsMenu,#extensions_settings,#extensions_settings2'))recoverEntries();},{capture:true,passive:true});
 listen(doc,'click',e=>{if(e.target?.closest?.('#extensionsMenuButton,#extensions-settings-button'))recoverEntries();},{capture:true,passive:true});
-function destroy(){if(stopped)return;stopped=true;clearTrail();particles=[];abort.abort();observer.disconnect();host.clearInterval(interval);timers.forEach(id=>host.clearTimeout(id));if(raf)host.cancelAnimationFrame(raf);if(scanFrame)host.cancelAnimationFrame(scanFrame);closeManager();layer.remove();sheet.remove();panelEntry?.remove();wandEntry?.remove();disposers.forEach(fn=>{try{fn();}catch{}});if(host[KEY]?.destroy===destroy)delete host[KEY];}
-host[KEY]={owner:'li-sparkling',version:'2.1.0',destroy,openManager,importPacks,renamePack,deletePack,exportPack:async()=>({format:'lili-click-effects',version:1,packs:[await portablePack(selected())]}),getDiagnostics:()=>({hits:totalHits,input:lastInput,particles:particles.length,trails:trails.length,trail:selectedTrail().id,trailEnabled:prefs.trailEnabled,canvasReady:!!ctx,theme:themeActive(),pack:selected().id,images:selected().images.map(s=>({ready:loadImage(s).ready,error:loadImage(s).error}))})};
+function destroy(){if(stopped)return;stopped=true;clearTrail();particles=[];abort.abort();observer.disconnect();host.clearInterval(interval);timers.forEach(id=>host.clearTimeout(id));if(raf)host.cancelAnimationFrame(raf);if(scanFrame)host.cancelAnimationFrame(scanFrame);closeManager();layer.remove();sheet.remove();panelEntry?.remove();wandEntry?.remove();disposers.forEach(fn=>{try{fn();}catch{}});if(host[KEY]?.destroy===destroy)delete host[KEY];if(host.__liSparkling?.destroy===destroy){delete host.__liSparkling;host.dispatchEvent(new host.Event('li-sparkling:change'));}}
+host[KEY]={owner:'li-sparkling',apiVersion:1,version:'2.2.0',isAvailable:()=>!stopped,mount:container=>openManager('gallery',container),unmount:container=>{if(container&&manager?.parentElement===container)closeManager();},destroy,openManager,importPacks,renamePack,deletePack,exportPack:async()=>({format:'lili-click-effects',version:1,packs:[await portablePack(selected())]}),getDiagnostics:()=>({hits:totalHits,input:lastInput,particles:particles.length,trails:trails.length,trail:selectedTrail().id,trailEnabled:prefs.trailEnabled,canvasReady:!!ctx,theme:themeActive(),pack:selected().id,images:selected().images.map(s=>({ready:loadImage(s).ready,error:loadImage(s).error}))})};
+host.__liSparkling=host[KEY];
+host.dispatchEvent(new host.Event('li-sparkling:change'));
 if(window!==host){
  // A persisted pagehide is suspension for the back/forward cache, not disabling.
  const onPageHide=e=>{if(!e.persisted)destroy();};

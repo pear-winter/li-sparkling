@@ -1,3 +1,4 @@
+@charset "UTF-8";
 .lpx-dialog{--lpx-bg:#fffdfd;--lpx-soft:#fff3f8;--lpx-ink:#674653;--lpx-pink:#f7c4d4;--lpx-line:#bd829d;box-sizing:border-box!important;width:min(430px,94vw)!important;max-width:94vw!important;max-height:88dvh!important;padding:16px!important;margin:auto!important;color:var(--lpx-ink)!important;background:var(--lpx-bg)!important;background-image:none!important;border:2px solid var(--lpx-line)!important;border-radius:6px!important;box-shadow:none!important;font:14px/1.6 var(--mainFontFamily,sans-serif)!important;text-shadow:none!important;overflow:auto!important;}
 .lpx-dialog::backdrop{background:rgba(0,0,0,.55)!important;}
 @media(prefers-color-scheme:dark){.lpx-dialog{--lpx-bg:#000;--lpx-soft:#000;--lpx-ink:#ffe6f2;--lpx-pink:#ffd2e4;--lpx-line:#e8abc8;}}
@@ -83,3 +84,7 @@ button.lpx-thumb{cursor:pointer;touch-action:manipulation;}
 .lpx-ripple-thumb{background:linear-gradient(135deg,#0a1829,#172742 60%,#0d1628)!important;}
 .lpx-water-ring{position:absolute;left:50%;top:58%;width:calc(34px + var(--ring)*30px);height:calc(13px + var(--ring)*11px);transform:translate(-50%,-50%);border:2.5px solid var(--ripple-color);border-top-color:var(--ripple-shine);border-radius:50%;box-shadow:0 0 4px var(--ripple-shine),inset 0 1px 0 var(--ripple-shine);opacity:calc(1 - var(--ring)*.17)}
 .lpx-ripple-thumb::before{content:'';position:absolute;left:50%;top:13%;height:23px;width:3px;background:var(--ripple-shine);border-radius:50%;box-shadow:0 0 5px var(--ripple-shine)}
+
+/* The installed plugin owns both standalone and embedded manager rendering. */
+.lpx-dialog.lpx-embedded{position:static!important;display:block!important;width:100%!important;max-width:none!important;max-height:none!important;margin:0!important;box-shadow:none!important;overflow:visible!important}
+.lpx-embedded .lpx-page{max-height:none;overflow:visible}
