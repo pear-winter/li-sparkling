@@ -1,5 +1,7 @@
 import { ASSETS, butterflyPacks } from './assets.js';
 import { seasonalPacks } from './seasonal.js';
+import { createGroups } from './groups.js';
+import { ripplePacks, spawnRipples, drawRipple } from './ripples.js';
 
 function start() {
 
@@ -24,7 +26,7 @@ const packsDefault=[
  {"id":"lili-pear","name":"梨梨 · 甜梨派对","images":[],"colors":["#ffe66d","#a9dc65","#fff5bd"],"count":10,"size":25,"duration":1100,"spread":100,"lift":45,"shape":"square","glow":0,"emojis":["🍐","🍐","💛","💚","✨"]},
  {"id":"lili-pear-garden","name":"梨梨 · 青柠小花园","images":[],"colors":["#f5d84f","#80c75b","#dcf4ac"],"count":10,"size":25,"duration":1100,"spread":100,"lift":45,"shape":"square","glow":0,"emojis":["🍐","🍋","🌼","🍀","🌱","💚"]},
  {"id":"lili-yellow-green","name":"黄绿 · 汽水泡泡","images":[],"colors":["#ffdc4f","#9ad95c","#fff3ad","#d1efa2"],"count":10,"size":8,"duration":1100,"spread":100,"lift":45,"shape":"circle","glow":0}
-, ...butterflyPacks, ...seasonalPacks
+, ...butterflyPacks, ...seasonalPacks, ...ripplePacks
 ];
 function validatePack(p){
  if(!p||typeof p!=='object'||typeof p.name!=='string'||!p.name.trim()||p.name.length>60)throw Error('特效名称需要 1～60 个字。');
@@ -35,11 +37,15 @@ function validatePack(p){
  const v={id:typeof p.id==='string'&&/^[a-zA-Z0-9_-]{1,64}$/.test(p.id)?p.id:'custom-'+randSeed().toString(36),name:p.name.trim(),images:[...p.images],colors:[...p.colors]};
  if(p.emojis!==undefined){if(!Array.isArray(p.emojis)||p.emojis.length>12||p.emojis.some(e=>typeof e!=='string'||!e.trim()||[...e].length>16))throw Error('emoji 最多 12 项，每项最多 16 个字符。');v.emojis=[...p.emojis];}
  if(p.shape!==undefined){if(!['square','circle','diamond','star'].includes(p.shape))throw Error('不支持的粒子形状。');v.shape=p.shape;}
- if(p.motion!==undefined){if(!['flutter','fall','bubble','snow','music'].includes(p.motion))throw Error('不支持的运动方式。');v.motion=p.motion;}
+ if(p.motion!==undefined){if(!['flutter','fall','bubble','snow','music','ripple'].includes(p.motion))throw Error('不支持的运动方式。');v.motion=p.motion;}
  if(p.glow!==undefined){if(!Number.isFinite(p.glow)||p.glow<0||p.glow>20)throw Error('发光强度需要 0～20。');v.glow=p.glow;}
  for(const [k,[min,max]] of Object.entries(bounds)){if(!Number.isFinite(p[k])||p[k]<min||p[k]>max)throw Error(`${k} 必须在 ${min}～${max} 之间。`);v[k]=Math.round(p[k]);}return v;
 }
 let custom=[];const savedCustom=parse(read('lili-fx-packs-v1'),[]);if(Array.isArray(savedCustom))for(const p of savedCustom.slice(0,20)){try{custom.push(validatePack(p));}catch{}}
+// Retire the supplied petal packs, including previously imported copies.
+const isRetiredPetal=p=>/^(?:custom-(?:legacy-)?)?lili-petal-(pink|red|white|black)(?:-|$)/.test(p?.id||'');
+custom=custom.filter(p=>!isRetiredPetal(p));
+if(Array.isArray(savedCustom)&&savedCustom.some(isRetiredPetal))write('lili-fx-packs-v1',JSON.stringify(custom));
 // Keep old custom artwork available while new seasonal builtins take their stable IDs.
 const migratedCustom=custom.map(p=>seasonalPacks.some(b=>b.id===p.id)?{...p,id:'custom-legacy-'+p.id}:p);
 if(migratedCustom.some((p,i)=>p!==custom[i])&&write('lili-fx-packs-v1',JSON.stringify(migratedCustom)))custom=migratedCustom;
@@ -50,6 +56,7 @@ prefs.scale=Math.max(.5,Math.min(2,Number(prefs.scale)||1));
 let hiddenBuiltins=parse(read('lili-fx-hidden-v1'),[]);if(!Array.isArray(hiddenBuiltins))hiddenBuiltins=[];
 let builtinNames=parse(read('lili-fx-names-v1'),{});if(!builtinNames||typeof builtinNames!=='object'||Array.isArray(builtinNames))builtinNames={};
 const allPacks=()=>[...packsDefault.filter(p=>!hiddenBuiltins.includes(p.id)&&!custom.some(c=>c.id===p.id)).map(p=>({...p,name:typeof builtinNames[p.id]==='string'?builtinNames[p.id].slice(0,60):p.name})),...custom];
+const groups=createGroups(parse(read('lili-fx-groups-v1'),null),value=>write('lili-fx-groups-v1',JSON.stringify(value)));
 const selected=()=>allPacks().find(p=>p.id===prefs.selected)||allPacks()[0]||{...packsDefault[0],id:'',name:'暂无特效',images:[],count:0};
 prefs.amount=Math.max(2,Math.min(14,Number(prefs.amount)||6));
 const trailPacks=[
@@ -194,7 +201,7 @@ function drawParticle(p,size){
  ctx.shadowBlur=0;
 }
 function frame(now){raf=0;if(stopped||!ctx)return;viewport();ctx.clearRect(0,0,cw,ch);particles=particles.filter(p=>now-p.start<p.duration);drawTrails(now);const spawned=[];
- for(const p of particles){if(p.kind==='symbol'){drawSymbol(p,now);continue;}if(p.kind==='flutter'||p.kind==='twinkle'){drawFlutter(p,now,spawned);continue;}if(p.kind==='petal'||p.kind==='dust'||p.kind==='bubble'||p.kind==='drop'){drawMore(p,now,spawned);continue;}const t=Math.max(0,(now-p.start)/p.duration),ease=1-Math.pow(1-t,3),x=p.x+p.dx*ease,y=p.y+p.dy*ease+12*t*t;ctx.save();ctx.translate(x,y);ctx.rotate(p.rotation*t);ctx.globalAlpha=Math.min(1,t/.08)*Math.pow(1-t,1.25);const size=p.size*(.6+Math.sin(Math.min(1,t*2)*Math.PI/2)*.4);
+ for(const p of particles){if(p.kind==='ripple'){drawRipple(ctx,p,now);continue;}if(p.kind==='symbol'){drawSymbol(p,now);continue;}if(p.kind==='flutter'||p.kind==='twinkle'){drawFlutter(p,now,spawned);continue;}if(p.kind==='petal'||p.kind==='dust'||p.kind==='bubble'||p.kind==='drop'){drawMore(p,now,spawned);continue;}const t=Math.max(0,(now-p.start)/p.duration),ease=1-Math.pow(1-t,3),x=p.x+p.dx*ease,y=p.y+p.dy*ease+12*t*t;ctx.save();ctx.translate(x,y);ctx.rotate(p.rotation*t);ctx.globalAlpha=Math.min(1,t/.08)*Math.pow(1-t,1.25);const size=p.size*(.6+Math.sin(Math.min(1,t*2)*Math.PI/2)*.4);
  if(p.texture?.ready)ctx.drawImage(p.texture.image,-size/2,-size/2,size,size);else if(p.emoji){ctx.font=`${size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(p.emoji,0,0);}else if(p.kind==='heart')drawHeart(0,0,size,p.color);else{drawParticle(p,size);}ctx.restore();}
  if(spawned.length)particles.push(...spawned.slice(0,Math.max(0,160-particles.length)));
  if(particles.length||trails.length)raf=host.requestAnimationFrame(frame);else{ctx.clearRect(0,0,cw,ch);try{layer.hidePopover();}catch{}}}
@@ -202,6 +209,7 @@ function burst(x,y,target,force=false){
  if(stopped||!ctx||(!prefs.enabled&&!force))return;
  const now=host.performance.now();if(!force&&now-lastBurst<150)return;lastBurst=now;
  const rect=raise(target),p=selected(),num=Math.min(prefs.amount,prefs.lightweight?4:14);
+ if(p.motion==='ripple'){particles.push(...spawnRipples(p,x-rect.left,y-rect.top,num,now,prefs.scale,prefs.lightweight));particles=particles.slice(-160);if(!raf)raf=host.requestAnimationFrame(frame);updateStatus();return;}
  if(p.motion&&p.images.length){(p.motion==='fall'?spawnFall:p.motion==='bubble'?spawnBubble:p.motion==='snow'||p.motion==='music'?spawnSymbols:spawnFlutter)(p,x-rect.left,y-rect.top,num,now);particles=particles.slice(-160);if(!raf)raf=host.requestAnimationFrame(frame);updateStatus();return;}
  for(let i=0;i<num;i++){const angle=Math.random()*Math.PI*2,dist=p.spread*(.35+Math.random()*.65),hasImage=p.images.length&&i<Math.min(3,Math.ceil(num*.55)),tex=hasImage?loadImage(p.images[i===0||p.images.length===1?0:1+Math.floor(Math.random()*(p.images.length-1))]):null;
  const emoji=p.emojis?.length&&i<Math.min(3,Math.ceil(num*.55))?p.emojis[Math.floor(Math.random()*p.emojis.length)]:null;
@@ -255,6 +263,7 @@ function download(name,value){const a=el('a');const url=host.URL.createObjectURL
 function statusText(){const imgs=selected().images.map(loadImage),ready=imgs.filter(x=>x.ready).length,bad=imgs.filter(x=>x.error).length;return `已捕获 ${totalHits} 次点击 · ${lastInput}\n素材 ${ready}/${imgs.length} 已就绪${bad?'，'+bad+' 张加载失败，请重新选择或导入素材':''} · ${ctx?'画布就绪':'画布不可用'}${prefs.enabled?'':' · 特效已关闭'}`;}
 function updateStatus(){const n=doc.querySelector('#lpx-status');if(n)n.textContent=statusText();}
 function thumbnail(pack,interactive=false){const n=el(interactive?'button':'div','lpx-thumb');if(interactive){n.type='button';n.setAttribute('aria-label','预览并使用 '+pack.name);n.dataset.lpxPreview='true';}
+ if(pack.motion==='ripple'){n.classList.add('lpx-ripple-thumb');n.style.setProperty('--ripple-color',pack.colors[0]);n.style.setProperty('--ripple-shine',pack.colors[1]);for(let i=0;i<3;i++){const ring=el('i','lpx-water-ring');ring.style.setProperty('--ring',i);n.append(ring);}return n;}
  if(pack.motion){n.classList.add('lpx-artwork','lpx-contrast');}
  const positions=[[22,45,-12],[52,28,9],[75,55,16]];
  if(pack.emojis?.length)positions.forEach(([x,y,rot],i)=>{const e=el('span',null,pack.emojis[i%pack.emojis.length]);e.style.cssText=`position:absolute;left:${x}%;top:${y}%;font-size:26px;transform:translate(-50%,-50%) rotate(${rot}deg)`;n.append(e);});
@@ -266,7 +275,7 @@ function deletePack(id){const p=allPacks().find(x=>x.id===id);if(!p)return;lastD
 function undoDelete(){if(!lastDeleted)return;if(lastDeleted.builtin){hiddenBuiltins=hiddenBuiltins.filter(x=>x!==lastDeleted.pack.id);write('lili-fx-hidden-v1',JSON.stringify(hiddenBuiltins));}else{if(!custom.some(p=>p.id===lastDeleted.pack.id))custom.push(lastDeleted.pack);savePacks();}prefs.selected=lastDeleted.pack.id;prefs.enabled=true;persist();lastDeleted=null;}
 function openManager(page='gallery'){
  if(typeof page!=='string')page='gallery';if(page==='upload')page='settings';if(manager?.isConnected){managerUI?.show(page);manager.focus();return;}
- const d=el('dialog','lpx-dialog lpx-manager');manager=d;d.setAttribute('aria-label','梨梨 · 点击与拖尾特效管理器');let currentPage=page,query='',editId='';
+ const d=el('dialog','lpx-dialog lpx-manager');manager=d;d.setAttribute('aria-label','梨梨 · 点击与拖尾特效管理器');let currentPage=page,query='',editId='',groupFilter=groups.has(prefs.galleryGroup)?prefs.galleryGroup:'all';
  const header=el('div','lpx-header');header.append(el('strong',null,'点击特效管理器'),button('×',closeManager,'lpx-btn lpx-close'));header.querySelector('button').setAttribute('aria-label','关闭管理器');d.append(header);
  const tabs=el('div','lpx-tabs');tabs.setAttribute('role','tablist');const galleryTab=button('01 · 点击',()=>show('gallery'),'lpx-tab'),trailTab=button('02 · 拖尾',()=>show('trails'),'lpx-tab'),uploadTab=button('03 · 设置',()=>show('settings'),'lpx-tab');
  [galleryTab,trailTab,uploadTab].forEach(t=>t.setAttribute('role','tab'));tabs.append(galleryTab,trailTab,uploadTab);d.append(tabs);
@@ -275,23 +284,42 @@ function openManager(page='gallery'){
  function show(which){if(which==='upload')which='settings';currentPage=which;galleryTab.setAttribute('aria-selected',String(which==='gallery'));trailTab.setAttribute('aria-selected',String(which==='trails'));uploadTab.setAttribute('aria-selected',String(which==='settings'));body.replaceChildren();if(which==='settings')renderUpload();else if(which==='trails')renderTrails();else renderGallery();}
  managerUI={show};
  function renderGallery(){
-  const toolbar=el('div','lpx-gallery-tools'),search=el('input','lpx-input');search.type='search';search.placeholder='搜索特效…';search.setAttribute('aria-label','搜索特效');search.value=query;
-  const add=button('＋ 添加',()=>show('upload'));toolbar.append(search,add);body.append(toolbar);
-  const bar=el('div','lpx-gallery-switch'),on=el('label','lpx-row'),toggle=el('input');toggle.type='checkbox';toggle.checked=!!prefs.enabled;on.append(toggle,doc.createTextNode('点击特效'));listen(toggle,'change',()=>{prefs.enabled=toggle.checked;persist();updateStatus();});bar.append(on,el('span','lpx-count',allPacks().length+' 组'));body.append(bar);
+  const toolbar=el('div','lpx-gallery-tools'),search=el('input','lpx-input');search.type='search';search.placeholder='搜索当前分组…';search.setAttribute('aria-label','搜索特效');search.value=query;
+  toolbar.append(search,button('＋ 添加',()=>show('upload')));body.append(toolbar);
+  const groupRow=el('div','lpx-group-row'),filter=el('select','lpx-input');filter.setAttribute('aria-label','选择特效分组');
+  const manage=el('details','lpx-group-editor');manage.append(el('summary',null,'管理分组'));
+  groupRow.append(filter);body.append(groupRow,manage);
+  const editor=el('div','lpx-group-form'),groupName=el('input','lpx-input');groupName.maxLength=20;groupName.placeholder='输入新组名';groupName.setAttribute('aria-label','分组名称');
+  const groupActions=el('div','lpx-actions');
+  const create=button('新建分组',()=>{try{groupFilter=groups.create(groupName.value);groupName.value='';saveFilter();refresh();tell('分组建好了，用卡片下方的菜单把特效移进来。');}catch(e){tell(e.message);}});
+  const rename=button('重命名当前组',()=>{try{groups.rename(groupFilter,groupName.value);groupName.value='';refresh();tell('组名改好啦。');}catch(e){tell(e.message);}});
+  const remove=button('删除当前组',()=>{try{groups.remove(groupFilter,allPacks());groupFilter='ungrouped';saveFilter();refresh();tell('分组已删除，里面的特效保留在未分组。');}catch(e){tell(e.message);}});
+  groupActions.append(create,rename,remove);editor.append(groupName,groupActions,el('p','lpx-muted','选好分组后可改名或删除；删除分组不会删除特效。'));manage.append(editor);
+  const bar=el('div','lpx-gallery-switch'),on=el('label','lpx-row'),toggle=el('input');toggle.type='checkbox';toggle.checked=!!prefs.enabled;on.append(toggle,doc.createTextNode('点击特效'));listen(toggle,'change',()=>{prefs.enabled=toggle.checked;persist();updateStatus();});bar.append(on,el('span','lpx-count'));body.append(bar);
   const grid=el('div','lpx-gallery');body.append(grid);
-  const draw=()=>{grid.replaceChildren();const packs=allPacks().filter(p=>p.name.toLocaleLowerCase().includes(query.toLocaleLowerCase().trim()));
-   if(!packs.length){grid.append(el('p','lpx-empty',allPacks().length?'没有找到这个名字，换个词试试。':'还没有特效，点“添加”上传一组吧。'));return;}
-   for(const p of packs){const card=el('article','lpx-card'+(selected().id===p.id?' is-selected':''));card.dataset.effectId=p.id;
-    const thumb=thumbnail(p,true);listen(thumb,'click',()=>{prefs.selected=p.id;prefs.enabled=true;toggle.checked=true;persist();preload();const r=thumb.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,thumb,true);draw();tell('正在使用：'+p.name);});card.append(thumb);
-    const title=el('div','lpx-card-title');title.textContent=p.name;title.title=p.name;card.append(title);
-    if(editId===p.id){const input=el('input','lpx-input lpx-rename');input.value=p.name;input.maxLength=60;input.setAttribute('aria-label','新特效名称');card.append(input);const save=()=>{try{renamePack(p.id,input.value);editId='';draw();tell('名字改好啦。');}catch(e){tell(e.message);}};const row=el('div','lpx-card-actions');row.append(button('保存',save),button('取消',()=>{editId='';draw();}));card.append(row);listen(input,'keydown',e=>{if(e.key==='Enter')save();});}
-    else{const row=el('div','lpx-card-actions');row.append(button('改名',()=>{editId=p.id;draw();grid.querySelector('.lpx-rename')?.focus();}),button('删除',()=>{deletePack(p.id);draw();bar.querySelector('.lpx-count').textContent=allPacks().length+' 组';tell('已删除，可点下方撤销。');undo.hidden=false;}));card.append(row);}
+  const saveFilter=()=>{prefs.galleryGroup=groupFilter;persist();};
+  const refresh=()=>{
+   if(groupFilter!=='all'&&!groups.has(groupFilter))groupFilter='all';
+   const all=allPacks();filter.replaceChildren();const addOption=(id,label)=>{const o=el('option',null,label);o.value=id;filter.append(o);};
+   addOption('all','全部特效 · '+all.length);for(const g of groups.list())addOption(g.id,g.name+' · '+all.filter(p=>groups.of(p)===g.id).length);filter.value=groupFilter;
+   rename.disabled=remove.disabled=groupFilter==='all'||groupFilter==='ungrouped';
+   grid.replaceChildren();const packs=all.filter(p=>(groupFilter==='all'||groups.of(p)===groupFilter)&&p.name.toLocaleLowerCase().includes(query.toLocaleLowerCase().trim()));
+   bar.querySelector('.lpx-count').textContent=packs.length+' 款 / 共 '+all.length+' 款';
+   if(!packs.length){grid.append(el('p','lpx-empty',query?'没有找到这个名字，换个词试试。':'这个分组还没有特效。到全部特效，用卡片下方的菜单移入吧。'));}
+   for(const p of packs){
+    const card=el('article','lpx-card'+(selected().id===p.id?' is-selected':''));card.dataset.effectId=p.id;
+    const thumb=thumbnail(p,true);listen(thumb,'click',()=>{prefs.selected=p.id;prefs.enabled=true;toggle.checked=true;persist();preload();const r=thumb.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,thumb,true);refresh();tell('正在使用：'+p.name);});card.append(thumb);
+    const title=el('div','lpx-card-title',p.name);title.title=p.name;card.append(title);
+    const membership=el('select','lpx-input lpx-group-select');membership.setAttribute('aria-label','移动 '+p.name+' 到分组');
+    for(const g of groups.list()){const o=el('option',null,g.name);o.value=g.id;membership.append(o);}membership.value=groups.of(p);
+    listen(membership,'change',()=>{try{groups.move(p,membership.value);refresh();tell('已移动到：'+groups.list().find(g=>g.id===groups.of(p)).name);}catch(e){membership.value=groups.of(p);tell(e.message);}});card.append(membership);
+    if(editId===p.id){const input=el('input','lpx-input lpx-rename');input.value=p.name;input.maxLength=60;input.setAttribute('aria-label','新特效名称');card.append(input);const save=()=>{try{renamePack(p.id,input.value);editId='';refresh();tell('名字改好啦。');}catch(e){tell(e.message);}};const row=el('div','lpx-card-actions');row.append(button('保存',save),button('取消',()=>{editId='';refresh();}));card.append(row);listen(input,'keydown',e=>{if(e.key==='Enter')save();});}
+    else{const row=el('div','lpx-card-actions');row.append(button('改名',()=>{editId=p.id;refresh();grid.querySelector('.lpx-rename')?.focus();}),button('删除',()=>{deletePack(p.id);refresh();tell('已删除，可点下方撤销。');undo.hidden=false;}));card.append(row);}
     grid.append(card);
    }
   };
-  const undo=button('撤销上次删除',()=>{undoDelete();draw();bar.querySelector('.lpx-count').textContent=allPacks().length+' 组';toggle.checked=!!prefs.enabled;undo.hidden=true;tell('已恢复。');});undo.hidden=!lastDeleted;body.append(undo);
-  listen(search,'input',()=>{query=search.value;draw();});draw();
-
+  const undo=button('撤销上次删除',()=>{undoDelete();refresh();toggle.checked=!!prefs.enabled;undo.hidden=true;tell('已恢复。');});undo.hidden=!lastDeleted;body.append(undo);
+  listen(search,'input',()=>{query=search.value;refresh();});listen(filter,'change',()=>{groupFilter=filter.value;saveFilter();refresh();});refresh();
  }
 
  function slider(parent,label,key,min,max,step,format=v=>String(v)){
@@ -320,14 +348,14 @@ function openManager(page='gallery'){
   const zone=button('＋ 选择图片或特效包',()=>file.click(),'lpx-upload-zone');zone.append(el('small',null,'PNG · JPG · WebP · GIF · JSON'));body.append(zone,file);
   listen(file,'change',async()=>{try{const files=[...file.files||[]];if(!files.length)return;if(files.reduce((n,f)=>n+f.size,0)>8*1024*1024)throw Error('一次上传总大小不能超过 8 MB。');
    const jsonFiles=files.filter(f=>f.name.toLowerCase().endsWith('.json'));
-   if(jsonFiles.length){if(jsonFiles.length!==files.length)throw Error('图片和 JSON 请分开上传。');let total=0;for(const f of jsonFiles)total+=importPacks(JSON.parse(await f.text()));if(stopped)return;prefs.enabled=true;persist();query='';show('gallery');tell('已导入 '+total+' 组特效。');return;}
+   if(jsonFiles.length){if(jsonFiles.length!==files.length)throw Error('图片和 JSON 请分开上传。');let total=0;for(const f of jsonFiles)total+=importPacks(JSON.parse(await f.text()));if(stopped)return;prefs.enabled=true;persist();query='';groupFilter='all';show('gallery');tell('已导入 '+total+' 组特效。');return;}
    if(files.length>12)throw Error('一组最多 12 张图片。');if(files.some(f=>!/^image\/(png|jpeg|webp|gif)$/.test(f.type)))throw Error('请选择 PNG / JPG / WebP / GIF 图片。');
    const images=await Promise.all(files.map(f=>new Promise((resolve,reject)=>{const r=new host.FileReader();r.onload=()=>resolve(String(r.result));r.onerror=()=>reject(Error('图片读取失败'));r.readAsDataURL(f);})));if(stopped)return;
    uploadDraft={id:'custom-'+randSeed().toString(36),name:files[0].name.replace(/\.[^.]+$/,'').slice(0,60)||'我的新特效',images,colors:['#ffb7bf','#fff5ef','#ffdae0'],count:6,size:24,duration:1000,spread:65,lift:45};validatePack(uploadDraft);show('upload');tell('图片准备好了，取个名字就能加入图库。');
   }catch(e){tell('上传失败：'+e.message);}finally{file.value='';}});
   if(uploadDraft){body.append(thumbnail(uploadDraft));const label=el('label','lpx-upload-label','特效名字'),name=el('input','lpx-input');name.value=uploadDraft.name;name.maxLength=60;name.setAttribute('aria-label','上传特效名称');label.append(name);body.append(label);
    const row=el('div','lpx-row','图案大小 '),size=el('input');size.type='range';size.min='8';size.max='48';size.step='1';size.value=uploadDraft.size;size.setAttribute('aria-label','上传图案大小');listen(size,'input',()=>{uploadDraft.size=Number(size.value);});row.append(size);body.append(row);
-   const actions=el('div','lpx-actions');actions.append(button('加入特效图库',()=>{try{uploadDraft.name=name.value;importPacks({format:'lili-click-effects',version:1,packs:[uploadDraft]});prefs.enabled=true;persist();uploadDraft=null;query='';show('gallery');tell('新特效已经加入图库，可以点预览图试试。');}catch(e){tell(e.message);}}),button('清空待上传',()=>{uploadDraft=null;show('upload');}));body.append(actions);
+   const actions=el('div','lpx-actions');actions.append(button('加入特效图库',()=>{try{uploadDraft.name=name.value;importPacks({format:'lili-click-effects',version:1,packs:[uploadDraft]});prefs.enabled=true;persist();uploadDraft=null;query='';groupFilter='all';show('gallery');tell('新特效已经加入图库，可以点预览图试试。');}catch(e){tell(e.message);}}),button('清空待上传',()=>{uploadDraft=null;show('upload');}));body.append(actions);
   }else body.append(el('div','lpx-upload-help','每组最多 12 张图；一次总大小不超过 8 MB。上传后可在图库里改名、删除和导出。'));
   const restore=button('恢复内置特效',()=>{hiddenBuiltins=[];builtinNames={};write('lili-fx-hidden-v1','[]');write('lili-fx-names-v1','{}');show('gallery');tell(packsDefault.length+' 组内置特效已恢复。');});body.append(restore);
  }
@@ -392,7 +420,7 @@ listen(doc,'visibilitychange',()=>{if(!doc.hidden)recoverEntries();else{particle
 listen(doc,'pointerdown',e=>{if(e.target?.closest?.('#extensionsMenuButton,#extensions-settings-button,#extensionsMenu,#extensions_settings,#extensions_settings2'))recoverEntries();},{capture:true,passive:true});
 listen(doc,'click',e=>{if(e.target?.closest?.('#extensionsMenuButton,#extensions-settings-button'))recoverEntries();},{capture:true,passive:true});
 function destroy(){if(stopped)return;stopped=true;clearTrail();particles=[];abort.abort();observer.disconnect();host.clearInterval(interval);timers.forEach(id=>host.clearTimeout(id));if(raf)host.cancelAnimationFrame(raf);if(scanFrame)host.cancelAnimationFrame(scanFrame);closeManager();layer.remove();sheet.remove();panelEntry?.remove();wandEntry?.remove();disposers.forEach(fn=>{try{fn();}catch{}});if(host[KEY]?.destroy===destroy)delete host[KEY];}
-host[KEY]={owner:'li-sparkling',version:'2.0.0',destroy,openManager,importPacks,renamePack,deletePack,exportPack:async()=>({format:'lili-click-effects',version:1,packs:[await portablePack(selected())]}),getDiagnostics:()=>({hits:totalHits,input:lastInput,particles:particles.length,trails:trails.length,trail:selectedTrail().id,trailEnabled:prefs.trailEnabled,canvasReady:!!ctx,theme:themeActive(),pack:selected().id,images:selected().images.map(s=>({ready:loadImage(s).ready,error:loadImage(s).error}))})};
+host[KEY]={owner:'li-sparkling',version:'2.1.0',destroy,openManager,importPacks,renamePack,deletePack,exportPack:async()=>({format:'lili-click-effects',version:1,packs:[await portablePack(selected())]}),getDiagnostics:()=>({hits:totalHits,input:lastInput,particles:particles.length,trails:trails.length,trail:selectedTrail().id,trailEnabled:prefs.trailEnabled,canvasReady:!!ctx,theme:themeActive(),pack:selected().id,images:selected().images.map(s=>({ready:loadImage(s).ready,error:loadImage(s).error}))})};
 if(window!==host){
  // A persisted pagehide is suspension for the back/forward cache, not disabling.
  const onPageHide=e=>{if(!e.persisted)destroy();};

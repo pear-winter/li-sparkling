@@ -38,32 +38,6 @@ notes=[
 for color,label,key in [('#000000','黑音符','black'),('#ffffff','白音符','white')]:
     images=[svg(f'music-{key}-{i+1}',f'<g fill="{color}">{body}</g>') for i,body in enumerate(notes)]
     packs.append(pack('lili-music-'+key,label+' · 轻轻哼唱',images,[color],'music',29,2100,80,130))
-# Curled, translucent petals with varied silhouettes, a central fold and a tiny notch.
-petal_shapes=[
- 'M48 91C38 70 21 48 28 27C32 14 44 10 50 20C59 8 70 18 73 30C76 50 60 76 48 91Z',
- 'M17 65C23 28 49 13 80 22C76 27 74 30 74 32C78 32 82 31 86 32C70 68 43 80 17 65Z',
- 'M16 66C22 34 53 19 80 29C67 38 68 55 52 66C40 73 27 75 16 66Z',
- 'M27 82C7 48 34 20 72 18C67 33 80 57 58 72C47 80 36 76 27 82Z',
-]
-for key,label,colors in [
- ('pink','粉樱',['#fff0f5','#ffc5d9','#ef81ab']),
- ('red','玫瑰',['#ffe0e6','#ff829f','#d73861']),
- ('white','白花',['#ffffff','#f7f6fb','#d8dbe7']),
- ('black','墨瓣',['#62616c','#2d2c38','#111016'])]:
-    images=[]
-    for i,path in enumerate(petal_shapes):
-        body=f'''<defs><radialGradient id="p" cx=".28" cy=".22" r=".85"><stop stop-color="{colors[0]}"/><stop offset=".42" stop-color="{colors[1]}"/><stop offset="1" stop-color="{colors[2]}"/></radialGradient><linearGradient id="fold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="{colors[0]}" stop-opacity=".75"/><stop offset="1" stop-color="{colors[0]}" stop-opacity="0"/></linearGradient><clipPath id="clip"><path d="{path}"/></clipPath></defs><path d="{path}" fill="url(#p)"/><g clip-path="url(#clip)"><path d="M29 14Q68 39 45 92Q77 48 53 9Z" fill="url(#fold)"/><path d="M16 66Q51 69 81 26Q62  70 16 66" fill="{colors[0]}" opacity=".26"/></g>'''
-        images.append(svg(f'petal-{key}-{i+1}',body))
-    for variant in range(2):
-        body=f'<defs><radialGradient id="p"><stop stop-color="{colors[2]}"/><stop offset=".4" stop-color="{colors[1]}"/><stop offset="1" stop-color="{colors[0]}"/></radialGradient></defs><g transform="translate(50 50) rotate({variant*24}) scale(1 {1 if variant==0 else .66})">'
-        for a in range(0,360,72):
-            body+=f'<path transform="rotate({a})" d="M0 3C-27-8-23-38-7-40L0-34L7-40C24-38 27-8 0 3Z" fill="url(#p)"/>'
-        for a in range(0,360,36):
-            x,y=math.cos(a*math.pi/180)*9,math.sin(a*math.pi/180)*9
-            body+=f'<circle cx="{x:.2f}" cy="{y:.2f}" r="1.5" fill="{colors[0]}"/>'
-        body+=f'<circle r="3" fill="{colors[2]}"/></g>'
-        images.append(svg(f'petal-{key}-flower-{variant+1}',body))
-    packs.append(pack('lili-petal-'+key,label+' · 风里落花',images,colors,'fall',31,2500,85,85))
 # Soap films: almost clear center, separate spectral crescents, broken white specular arcs.
 images=[]
 for i in range(3):

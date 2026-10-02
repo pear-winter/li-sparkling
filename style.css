@@ -73,3 +73,13 @@ button.lpx-thumb{cursor:pointer;touch-action:manipulation;}
 .lpx-dialog [hidden]{display:none!important;}
 .lpx-dialog .lpx-thumb{touch-action:manipulation;}
 @media(max-width:400px){.lpx-manager{padding:10px!important;}.lpx-gallery{gap:8px;}}
+
+.lpx-group-row{margin:10px 0 6px;display:flex;gap:8px;min-width:0}
+.lpx-group-editor{border:1px dashed var(--lpx-line);padding:7px 9px;font-size:12px;margin-bottom:8px}
+.lpx-group-editor summary{cursor:pointer;min-height:28px;line-height:28px}
+.lpx-group-form{padding-top:8px}
+.lpx-dialog .lpx-group-select{font-size:11px!important;padding:5px!important;min-height:32px!important;margin:0 0 7px;max-width:100%}
+.lpx-dialog button:disabled{opacity:.45!important;cursor:default}
+.lpx-ripple-thumb{background:linear-gradient(135deg,#0a1829,#172742 60%,#0d1628)!important;}
+.lpx-water-ring{position:absolute;left:50%;top:58%;width:calc(34px + var(--ring)*30px);height:calc(13px + var(--ring)*11px);transform:translate(-50%,-50%);border:2.5px solid var(--ripple-color);border-top-color:var(--ripple-shine);border-radius:50%;box-shadow:0 0 4px var(--ripple-shine),inset 0 1px 0 var(--ripple-shine);opacity:calc(1 - var(--ring)*.17)}
+.lpx-ripple-thumb::before{content:'';position:absolute;left:50%;top:13%;height:23px;width:3px;background:var(--ripple-shine);border-radius:50%;box-shadow:0 0 5px var(--ripple-shine)}
