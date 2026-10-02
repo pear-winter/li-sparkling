@@ -22,7 +22,7 @@ const errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.goto(url);await page.waitForFunction(()=>window.__liliPixelV2?.getDiagnostics().canvasReady);
  await page.locator('#lpx-panel button').click();
- assert.equal(await page.locator('.lpx-card').count(),34,'34 builtins');
+ assert.equal(await page.locator('.lpx-card').count(),42,'42 builtins');
  assert.equal(await page.evaluate(()=>document.querySelector('dialog').scrollWidth<=document.querySelector('dialog').clientWidth),true,'no horizontal overflow');
  // Load all textures independently; a single broken SVG/WebP must fail the test.
  const assets=await page.evaluate(async()=>{const {ASSETS,butterflyPacks}=await import('/assets.js');const {seasonalPacks}=await import('/seasonal.js');const srcs=[...new Set([...Object.values(ASSETS),...[...butterflyPacks,...seasonalPacks].flatMap(p=>p.images)])];await Promise.all(srcs.map(src=>{const img=new Image();img.src=src;return img.decode();}));return srcs.length;});
@@ -101,7 +101,7 @@ try{
  await page.getByRole('tab',{name:'03 · 设置'}).click();assert.equal(await page.getByRole('slider',{name:'粒子大小',exact:true}).inputValue(),'1.6');
  await page.getByRole('tab',{name:'01 · 点击'}).click();
  const groupFilter=page.getByRole('combobox',{name:'选择特效分组'});
- await groupFilter.selectOption('butterflies');assert.equal(await page.locator('.lpx-card').count(),9);
+ await groupFilter.selectOption('butterflies');assert.equal(await page.locator('.lpx-card').count(),10);
  await groupFilter.selectOption('rain');assert.equal(await page.locator('.lpx-card').count(),4);
  await page.locator('.lpx-group-editor summary').click();await page.getByRole('textbox',{name:'分组名称'}).fill('雨夜收藏');await page.getByRole('button',{name:'新建分组',exact:true}).click();
  const newGroup=await groupFilter.inputValue();assert(newGroup.startsWith('group-'));assert.equal(await page.locator('.lpx-card').count(),0);
@@ -126,6 +126,6 @@ try{
  });
  await page.screenshot({path:path.join(artifacts,'builtin-preview.png'),fullPage:true});
  assert.deepEqual(errors,[]);
- console.log(`PASS: 34 builtins + groups + ripples + petal retirement; ${assets} local assets; mobile layout; new click/trail modes; centered diffusion; portable paired colors; export/import; legacy settings; menu recovery; touch/iframe; trails; lifecycle.\nArtifacts: ${artifacts}`);
+ console.log(`PASS: 42 builtins + groups + ripples + petal retirement; ${assets} local assets; mobile layout; new click/trail modes; centered diffusion; portable paired colors; export/import; legacy settings; menu recovery; touch/iframe; trails; lifecycle.\nArtifacts: ${artifacts}`);
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
 

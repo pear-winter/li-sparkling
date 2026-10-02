@@ -48,6 +48,14 @@ try{
   await page.setViewportSize({width:390,height:844});
   await page.screenshot({path:path.join(artifacts,`theme-${theme.name}.png`)});
  }
+ // Centering and always-reachable close button, even after scrolling and viewport resize.
+ for(const [width,height] of [[320,480],[844,390],[1080,1536],[1440,900]]){
+  await page.setViewportSize({width,height});await filter.selectOption('all');
+  await page.locator('.lpx-page').evaluate(e=>e.scrollTop=e.scrollHeight);
+  const r=await page.locator('.lpx-manager').evaluate(d=>{const a=d.getBoundingClientRect(),b=d.querySelector('.lpx-close').getBoundingClientRect();return {x:a.x,y:a.y,w:a.width,h:a.height,close:[b.x,b.y,b.width,b.height],hit:document.elementFromPoint(b.x+b.width/2,b.y+b.height/2)===d.querySelector('.lpx-close')};});
+  assert(Math.abs(r.w/width-.94)<.01);assert(Math.abs(r.x+r.w/2-width/2)<2);assert(Math.abs(r.y+r.h/2-height/2)<2);assert(r.close[1]>=0&&r.close[1]+r.close[3]<=height);assert(r.close[2]>=44&&r.close[3]>=44);assert(r.hit);
+ }
+ await page.setViewportSize({width:1080,height:1536});await page.locator('.lpx-page').evaluate(e=>e.scrollTop=0);await page.screenshot({path:path.join(artifacts,'wide-manager.png')});
  // Water must be transparent, expand, fade out, and use a different blue palette.
  const frames=await page.evaluate(async()=>{
   const {ripplePacks,drawWave,drawRipple}=await import('/ripples.js');

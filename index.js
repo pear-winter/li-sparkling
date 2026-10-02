@@ -1,4 +1,4 @@
-import { textPacks, pearTrail, preparePearEmoji, supportedLabels, spawnText, drawTextParticle, drawPearEmoji, drawPearTrail } from './pear-effects.js';
+import { textPacks, pearTrail, preparePearEmoji, prepareTextImages, supportedLabels, spawnText, drawTextParticle, drawPearEmoji, drawPearTrail } from './pear-effects.js';
 import { clearWaterCache } from './water.js';
 import { ASSETS, butterflyPacks } from './assets.js';
 import { seasonalPacks } from './seasonal.js';
@@ -31,7 +31,7 @@ const packsDefault=[
  {"id":"lili-pear","name":"梨梨 · 甜梨派对","images":[],"colors":["#ffe66d","#a9dc65","#fff5bd"],"count":10,"size":25,"duration":1100,"spread":100,"lift":45,"shape":"square","glow":0,"sparkles":true,"motifs":["pear","pear","heart","heart","star"]},
  {"id":"lili-pear-garden","name":"梨梨 · 青柠小花园","images":[],"colors":["#f5d84f","#80c75b","#dcf4ac"],"count":10,"size":25,"duration":1100,"spread":100,"lift":45,"shape":"square","glow":0,"sparkles":true,"motifs":["pear","leaf","flower","leaf","flower","heart"]},
  {"id":"lili-yellow-green","name":"黄绿 · 汽水泡泡","images":[],"colors":["#ffdc4f","#9ad95c","#fff3ad","#d1efa2"],"count":10,"size":8,"duration":1100,"spread":100,"lift":45,"shape":"circle","glow":0}
-, ...butterflyPacks, ...seasonalPacks, ...ripplePacks, ...ornamentPacks, ...textPacks
+, {id:'lili-pear-rabbit-carrot',name:'兔兔与胡萝卜 · 像素派对',images:['rabbit.png','carrot.png'].map(f=>new URL('./assets/'+f,import.meta.url).href),colors:['#ffffff','#ffb77e','#acd391'],count:6,size:40,duration:2000,spread:95,lift:65,shape:'square',glow:0,sparkles:true}, ...butterflyPacks, ...seasonalPacks, ...ripplePacks, ...ornamentPacks, ...textPacks
 ];
 function validatePack(p){
  if(!p||typeof p!=='object'||typeof p.name!=='string'||!p.name.trim()||p.name.length>60)throw Error('特效名称需要 1～60 个字。');
@@ -45,7 +45,7 @@ function validatePack(p){
  if(p.shape!==undefined){if(!['square','circle','diamond','star'].includes(p.shape))throw Error('不支持的粒子形状。');v.shape=p.shape;}
  if(p.motion!==undefined){if(!['flutter','fall','bubble','snow','music','ripple','wave','fountain','glitter','blossom','pixel-text'].includes(p.motion))throw Error('不支持的运动方式。');v.motion=p.motion;}
  if(p.sparkles!==undefined){if(typeof p.sparkles!=='boolean')throw Error('小粒子开关无效。');v.sparkles=p.sparkles;}
- if(p.motion==='pixel-text'){if(!supportedLabels.includes(p.label)||!['pear','butterfly'].includes(p.companions)||p.colors.length<2)throw Error('像素字或伴随图案无效。');v.label=p.label;v.companions=p.companions;}
+ if(p.motion==='pixel-text'){if(!supportedLabels.includes(p.label)||!['pear','butterfly','leaf','sprite'].includes(p.companions)||p.colors.length<2)throw Error('像素字或伴随图案无效。');if(p.companions==='sprite'&&!p.images.length)throw Error('缺少伴随图片。');v.label=p.label;v.companions=p.companions;}
  if(p.paired!==undefined){if(typeof p.paired!=='boolean'||(p.paired&&(p.images.length<2||p.images.length%2)))throw Error('双蝶标记无效。');v.paired=p.paired;}
  if(p.hues!==undefined){if(!Array.isArray(p.hues)||p.hues.length!==p.images.length||p.hues.some(h=>!Number.isFinite(h)||Math.abs(h)>360))throw Error('素材色相无效。');v.hues=[...p.hues];}
  if(p.glow!==undefined){if(!Number.isFinite(p.glow)||p.glow<0||p.glow>20)throw Error('发光强度需要 0～20。');v.glow=p.glow;}
@@ -279,7 +279,7 @@ function statusText(){const imgs=selected().images.map((src,i)=>loadImage(src,se
 function updateStatus(){const n=doc.querySelector('#lpx-status');if(n)n.textContent=statusText();}
 function motifPreview(motif,colors){const c=el('canvas');c.width=280;c.height=160;c.style.cssText='width:100%;height:100%;display:block';const cx=c.getContext('2d');for(let i=0;i<5;i++){cx.save();cx.translate(34+i*51,82+Math.sin(i*1.7)*25);if(motif==='pear-emoji'){drawPearEmoji(cx,30);cx.fillStyle=colors[i%colors.length];cx.fillRect(-18,12,3,3);cx.fillRect(14,-16,2,2);}else if(motif==='wave'){drawWave(cx,{x:0,y:0,start:0,duration:1000,radius:27,scale:.65,colors,rings:3},550);}else drawMotif(cx,motif,motif==='bubble'?42:25,colors[i%colors.length],i);cx.restore();}return c;}
 function thumbnail(pack,interactive=false){const n=el(interactive?'button':'div','lpx-thumb');if(interactive){n.type='button';n.setAttribute('aria-label','预览并使用 '+pack.name);n.dataset.lpxPreview='true';}
- if(pack.motion==='pixel-text'){n.classList.add('lpx-contrast');const c=el('canvas');c.width=280;c.height=160;c.style.cssText='width:100%;height:100%;display:block';const cx=c.getContext('2d');for(const p of spawnText(pack,140,108,6,0,1,false,280,160))drawTextParticle(cx,p,600);n.append(c);return n;}
+ if(pack.motion==='pixel-text'){n.classList.add('lpx-contrast');const c=el('canvas');c.width=280;c.height=160;c.style.cssText='width:100%;height:100%;display:block';const cx=c.getContext('2d');const paint=()=>{cx.clearRect(0,0,280,160);for(const p of spawnText(pack,140,108,6,0,1,false,280,160))drawTextParticle(cx,p,600);};paint();prepareTextImages(doc,pack).then(paint);n.append(c);return n;}
  if(pack.motifs?.length){n.classList.add('lpx-contrast');n.append(motifPreview(pack.motifs[0],pack.colors));return n;}
  if(motifFor(pack.motion)){n.classList.add('lpx-contrast');n.append(motifPreview(motifFor(pack.motion),pack.colors));return n;}
  if(pack.motion==='ripple'||pack.motion==='wave'){n.classList.add('lpx-ripple-thumb');const c=el('canvas');c.width=280;c.height=160;const cx=c.getContext('2d');(pack.motion==='ripple'?drawRipple:drawWave)(cx,{x:140,y:90,start:0,duration:2400,radius:116,scale:1,colors:pack.colors,rings:5,drops:4},800);n.append(c);return n;}
@@ -446,7 +446,7 @@ listen(doc,'visibilitychange',()=>{if(!doc.hidden)recoverEntries();else{particle
 listen(doc,'pointerdown',e=>{if(e.target?.closest?.('#extensionsMenuButton,#extensions-settings-button,#extensionsMenu,#extensions_settings,#extensions_settings2'))recoverEntries();},{capture:true,passive:true});
 listen(doc,'click',e=>{if(e.target?.closest?.('#extensionsMenuButton,#extensions-settings-button'))recoverEntries();},{capture:true,passive:true});
 function destroy(){if(stopped)return;stopped=true;clearWaterCache();clearTrail();particles=[];abort.abort();observer.disconnect();host.clearInterval(interval);timers.forEach(id=>host.clearTimeout(id));if(raf)host.cancelAnimationFrame(raf);if(scanFrame)host.cancelAnimationFrame(scanFrame);closeManager();layer.remove();sheet.remove();panelEntry?.remove();wandEntry?.remove();disposers.forEach(fn=>{try{fn();}catch{}});if(host[KEY]?.destroy===destroy)delete host[KEY];if(host.__liSparkling?.destroy===destroy){delete host.__liSparkling;host.dispatchEvent(new host.Event('li-sparkling:change'));}}
-host[KEY]={owner:'li-sparkling',apiVersion:1,version:'2.4.0',isAvailable:()=>!stopped,mount:container=>openManager('gallery',container),unmount:container=>{if(container&&manager?.parentElement===container)closeManager();},destroy,openManager,importPacks,renamePack,deletePack,exportPack:async()=>({format:'lili-click-effects',version:1,packs:[await portablePack(selected())]}),getDiagnostics:()=>({hits:totalHits,input:lastInput,particles:particles.length,trails:trails.length,trail:selectedTrail().id,trailEnabled:prefs.trailEnabled,canvasReady:!!ctx,theme:themeActive(),pack:selected().id,images:selected().images.map((s,i)=>({ready:loadImage(s,selected().hues?.[i]||0).ready,error:loadImage(s,selected().hues?.[i]||0).error}))})};
+host[KEY]={owner:'li-sparkling',apiVersion:1,version:'2.5.0',isAvailable:()=>!stopped,mount:container=>openManager('gallery',container),unmount:container=>{if(container&&manager?.parentElement===container)closeManager();},destroy,openManager,importPacks,renamePack,deletePack,exportPack:async()=>({format:'lili-click-effects',version:1,packs:[await portablePack(selected())]}),getDiagnostics:()=>({hits:totalHits,input:lastInput,particles:particles.length,trails:trails.length,trail:selectedTrail().id,trailEnabled:prefs.trailEnabled,canvasReady:!!ctx,theme:themeActive(),pack:selected().id,images:selected().images.map((s,i)=>({ready:loadImage(s,selected().hues?.[i]||0).ready,error:loadImage(s,selected().hues?.[i]||0).error}))})};
 host.__liSparkling=host[KEY];
 host.dispatchEvent(new host.Event('li-sparkling:change'));
 if(window!==host){

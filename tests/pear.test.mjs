@@ -22,13 +22,13 @@ const errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.goto(url);await page.waitForFunction(()=>window.__liSparkling);
  await page.locator('#lpx-panel button').click();await page.getByRole('combobox',{name:'选择特效分组'}).selectOption('pear');
- assert.equal(await page.locator('.lpx-card').count(),5,'old two plus three text effects');
+ assert.equal(await page.locator('.lpx-card').count(),12,'two old, nine text effects, rabbit/carrot');
  for(const id of ['lili-pear','lili-pear-garden']){
   await page.locator(`[data-effect-id="${id}"] .lpx-thumb`).click();
   const out=await page.evaluate(()=>window.__liSparkling.exportPack());assert.equal(out.packs[0].sparkles,true);
   assert((await page.evaluate(()=>window.__liSparkling.getDiagnostics().particles))>=13,'six motifs plus seven small sparks');
  }
- for(const [id,label,companions] of [['lili-pear-word','梨','pear'],['lili-pear-hanari','Hanari！','butterfly'],['lili-pear-lumi','Lumi！','butterfly']]){
+ for(const [id,label,companions] of await page.evaluate(async()=> (await import('/pear-effects.js')).textPacks.map(p=>[p.id,p.label,p.companions]))){
   await page.locator(`[data-effect-id="${id}"] .lpx-thumb`).click();
   const out=await page.evaluate(()=>window.__liSparkling.exportPack());assert.equal(out.packs[0].label,label);assert.equal(out.packs[0].companions,companions);
   assert.equal(await page.evaluate(d=>window.__liSparkling.importPacks(d),out),1);
@@ -60,7 +60,9 @@ try{
   window.__liSparkling.destroy();document.body.replaceChildren();document.body.style='margin:0;background:#cbd0c5';
   const {textPacks,spawnText,drawTextParticle,drawPearTrail,preparePearEmoji}=await import('/pear-effects.js');
   const c=document.createElement('canvas');c.width=1000;c.height=760;document.body.append(c);const ctx=c.getContext('2d');
-  for(let row=0;row<2;row++){ctx.fillStyle=row?'#172330':'#f4f5e9';ctx.fillRect(0,row*380,1000,380);for(let i=0;i<3;i++){const p=textPacks[i];for(const q of spawnText(p,170+i*330,145+row*380,6,0,1.25,false,1000,760))drawTextParticle(ctx,q,600);}for(let i=0;i<14;i++)drawPearTrail(ctx,{x:75+i*64,y:275+row*380+Math.sin(i*.7)*15,time:i*20,duration:650,phase:i*2.4,size:1.2,amount:3,colors:['#acd35d','#ffffff','#e8ed9b']},350);}
+  await preparePearEmoji(document);
+  for(let i=0;i<textPacks.length;i++){const x=(i%3)*333,y=Math.floor(i/3)*240;ctx.fillStyle='#f4f5e9';ctx.fillRect(x,y,166,240);ctx.fillStyle='#172330';ctx.fillRect(x+166,y,167,240);for(const q of spawnText(textPacks[i],x+166,y+145,6,0,1.1,false,1000,760))drawTextParticle(ctx,q,600);}
+
  });
  await page.screenshot({path:path.join(artifacts,'pear-pixel-effects.png')});
  assert.deepEqual(errors,[]);console.log('PASS: pear group; old presets with extra particles; text import/export; 2-color bitmap drawing without fonts; four/two companions; mobile bounds; emoji trail and saved selection; expiry.');
