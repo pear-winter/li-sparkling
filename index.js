@@ -1,3 +1,4 @@
+import { clearWaterCache } from './water.js';
 import { ASSETS, butterflyPacks } from './assets.js';
 import { seasonalPacks } from './seasonal.js';
 import { createGroups } from './groups.js';
@@ -82,9 +83,9 @@ let manager=null,raf=0,totalHits=0,lastInput='尚未点击',particles=[],lastBur
 const cache=new Map(),seenFrames=new WeakSet(),boundDocs=new WeakSet();
 const timers=new Set(),disposers=[];
 function later(fn,ms){const id=host.setTimeout(()=>{timers.delete(id);if(!stopped)fn();},ms);timers.add(id);return id;}
-function el(tag,cls,text){const n=doc.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;}
+function el(tag,cls,text){const n=doc.createElement(tag);if(cls)n.className=cls;if(n.classList.contains('lpx-input'))n.classList.add('text_pole');if(text!==undefined)n.textContent=text;return n;}
 function listen(n,event,fn,opts={}){n.addEventListener(event,fn,{...opts,signal:abort.signal});}
-function button(label,fn,cls='lpx-btn'){const b=el('button',cls,label);b.type='button';listen(b,'click',fn);return b;}
+function button(label,fn,cls='lpx-btn'){const b=el('button',cls,label);if(b.classList.contains('lpx-btn'))b.classList.add('menu_button');b.type='button';listen(b,'click',fn);return b;}
 function styleImportant(n,styles){for(const [k,v]of Object.entries(styles))n.style.setProperty(k,String(v),'important');}
 const sheet=el('link');sheet.id='lpx-ui-style';sheet.rel='stylesheet';sheet.href=new URL('./style.css',import.meta.url).href;doc.head.append(sheet);
 const layer=el('div');layer.id='lpx-canvas-layer';layer.setAttribute('aria-hidden','true');layer.setAttribute('popover','manual');
@@ -274,7 +275,7 @@ function motifPreview(motif,colors){const c=el('canvas');c.width=280;c.height=16
 function thumbnail(pack,interactive=false){const n=el(interactive?'button':'div','lpx-thumb');if(interactive){n.type='button';n.setAttribute('aria-label','预览并使用 '+pack.name);n.dataset.lpxPreview='true';}
  if(pack.motifs?.length){n.classList.add('lpx-contrast');n.append(motifPreview(pack.motifs[0],pack.colors));return n;}
  if(motifFor(pack.motion)){n.classList.add('lpx-contrast');n.append(motifPreview(motifFor(pack.motion),pack.colors));return n;}
- if(pack.motion==='ripple'||pack.motion==='wave'){n.classList.add('lpx-ripple-thumb');n.style.setProperty('--ripple-color',pack.colors[0]);n.style.setProperty('--ripple-shine',pack.colors[1]);for(let i=0;i<3;i++){const ring=el('i','lpx-water-ring');ring.style.setProperty('--ring',i);n.append(ring);}return n;}
+ if(pack.motion==='ripple'||pack.motion==='wave'){n.classList.add('lpx-ripple-thumb');const c=el('canvas');c.width=280;c.height=160;const cx=c.getContext('2d');(pack.motion==='ripple'?drawRipple:drawWave)(cx,{x:140,y:90,start:0,duration:2400,radius:116,scale:1,colors:pack.colors,rings:5,drops:4},800);n.append(c);return n;}
  if(pack.motion){n.classList.add('lpx-artwork','lpx-contrast');}
  const positions=[[22,45,-12],[52,28,9],[75,55,16]];
  if(pack.emojis?.length)positions.forEach(([x,y,rot],i)=>{const e=el('span',null,pack.emojis[i%pack.emojis.length]);e.style.cssText=`position:absolute;left:${x}%;top:${y}%;font-size:26px;transform:translate(-50%,-50%) rotate(${rot}deg)`;n.append(e);});
@@ -288,7 +289,7 @@ function openManager(page='gallery',container=null){
  if(stopped)return null;
  if(container&&(container.ownerDocument!==doc||typeof container.append!=='function'))throw Error('管理器容器必须位于酒馆页面中。');
  if(typeof page!=='string')page='gallery';if(page==='upload')page='settings';if(manager?.isConnected){if(!container||manager.parentElement===container){managerUI?.show(page);manager.focus();return manager;}closeManager();}
- const d=el(container?'section':'dialog','lpx-dialog lpx-manager');manager=d;d.setAttribute('aria-label','梨梨 · 点击与拖尾特效管理器');let currentPage=page,query='',editId='',groupFilter=groups.has(prefs.galleryGroup)?prefs.galleryGroup:'all';
+ const d=el(container?'section':'dialog','popup lpx-dialog lpx-manager');manager=d;d.setAttribute('aria-label','梨梨 · 点击与拖尾特效管理器');let currentPage=page,query='',editId='',groupFilter=groups.has(prefs.galleryGroup)?prefs.galleryGroup:'all';
  const header=el('div','lpx-header');header.append(el('strong',null,'点击特效管理器'));if(!container){const close=button('×',closeManager,'lpx-btn lpx-close');close.setAttribute('aria-label','关闭管理器');header.append(close);}d.append(header);
  const tabs=el('div','lpx-tabs');tabs.setAttribute('role','tablist');const galleryTab=button('01 · 点击',()=>show('gallery'),'lpx-tab'),trailTab=button('02 · 拖尾',()=>show('trails'),'lpx-tab'),uploadTab=button('03 · 设置',()=>show('settings'),'lpx-tab');
  [galleryTab,trailTab,uploadTab].forEach(t=>t.setAttribute('role','tab'));tabs.append(galleryTab,trailTab,uploadTab);d.append(tabs);
@@ -397,9 +398,14 @@ function installPanel(){
  if(stopped)return;
  if(!sheet.isConnected)(doc.head||doc.documentElement).append(sheet);
  if(!panelEntry){
-  panelEntry=el('div','lpx-panel');panelEntry.id='lpx-panel';
-  const open=button('',()=>openManager(),'inline-drawer-header lpx-panel-button');
-  open.append(el('b',null,'点击特效管理器'),el('span','inline-drawer-icon','›'));panelEntry.append(open);
+  panelEntry=el('div','extension_container lpx-panel');panelEntry.id='lpx-panel';
+  const drawer=el('div','inline-drawer');
+  // Native header classes let ST themes supply their borders and decorations.
+  // This header opens a modal, so do not also trigger ST's delegated drawer toggle.
+  const open=button('',e=>{e.stopPropagation();openManager();},'inline-drawer-toggle inline-drawer-header lpx-panel-button');
+  open.setAttribute('aria-haspopup','dialog');
+  open.append(el('b',null,'点击特效管理器'),el('div','inline-drawer-icon fa-solid fa-circle-chevron-down down'));
+  drawer.append(open);panelEntry.append(drawer);
  }
  if(!wandEntry){
   wandEntry=el('div','list-group-item flex-container flexGap5 interactable');wandEntry.id='lpx-wand-entry';
@@ -432,8 +438,8 @@ listen(doc,'visibilitychange',()=>{if(!doc.hidden)recoverEntries();else{particle
 // Repair synchronously before the wand/settings drawer is opened.
 listen(doc,'pointerdown',e=>{if(e.target?.closest?.('#extensionsMenuButton,#extensions-settings-button,#extensionsMenu,#extensions_settings,#extensions_settings2'))recoverEntries();},{capture:true,passive:true});
 listen(doc,'click',e=>{if(e.target?.closest?.('#extensionsMenuButton,#extensions-settings-button'))recoverEntries();},{capture:true,passive:true});
-function destroy(){if(stopped)return;stopped=true;clearTrail();particles=[];abort.abort();observer.disconnect();host.clearInterval(interval);timers.forEach(id=>host.clearTimeout(id));if(raf)host.cancelAnimationFrame(raf);if(scanFrame)host.cancelAnimationFrame(scanFrame);closeManager();layer.remove();sheet.remove();panelEntry?.remove();wandEntry?.remove();disposers.forEach(fn=>{try{fn();}catch{}});if(host[KEY]?.destroy===destroy)delete host[KEY];if(host.__liSparkling?.destroy===destroy){delete host.__liSparkling;host.dispatchEvent(new host.Event('li-sparkling:change'));}}
-host[KEY]={owner:'li-sparkling',apiVersion:1,version:'2.3.1',isAvailable:()=>!stopped,mount:container=>openManager('gallery',container),unmount:container=>{if(container&&manager?.parentElement===container)closeManager();},destroy,openManager,importPacks,renamePack,deletePack,exportPack:async()=>({format:'lili-click-effects',version:1,packs:[await portablePack(selected())]}),getDiagnostics:()=>({hits:totalHits,input:lastInput,particles:particles.length,trails:trails.length,trail:selectedTrail().id,trailEnabled:prefs.trailEnabled,canvasReady:!!ctx,theme:themeActive(),pack:selected().id,images:selected().images.map((s,i)=>({ready:loadImage(s,selected().hues?.[i]||0).ready,error:loadImage(s,selected().hues?.[i]||0).error}))})};
+function destroy(){if(stopped)return;stopped=true;clearWaterCache();clearTrail();particles=[];abort.abort();observer.disconnect();host.clearInterval(interval);timers.forEach(id=>host.clearTimeout(id));if(raf)host.cancelAnimationFrame(raf);if(scanFrame)host.cancelAnimationFrame(scanFrame);closeManager();layer.remove();sheet.remove();panelEntry?.remove();wandEntry?.remove();disposers.forEach(fn=>{try{fn();}catch{}});if(host[KEY]?.destroy===destroy)delete host[KEY];if(host.__liSparkling?.destroy===destroy){delete host.__liSparkling;host.dispatchEvent(new host.Event('li-sparkling:change'));}}
+host[KEY]={owner:'li-sparkling',apiVersion:1,version:'2.3.2',isAvailable:()=>!stopped,mount:container=>openManager('gallery',container),unmount:container=>{if(container&&manager?.parentElement===container)closeManager();},destroy,openManager,importPacks,renamePack,deletePack,exportPack:async()=>({format:'lili-click-effects',version:1,packs:[await portablePack(selected())]}),getDiagnostics:()=>({hits:totalHits,input:lastInput,particles:particles.length,trails:trails.length,trail:selectedTrail().id,trailEnabled:prefs.trailEnabled,canvasReady:!!ctx,theme:themeActive(),pack:selected().id,images:selected().images.map((s,i)=>({ready:loadImage(s,selected().hues?.[i]||0).ready,error:loadImage(s,selected().hues?.[i]||0).error}))})};
 host.__liSparkling=host[KEY];
 host.dispatchEvent(new host.Event('li-sparkling:change'));
 if(window!==host){
@@ -452,3 +458,4 @@ export function onDisable() { if (window.__liliPixelV2?.owner === 'li-sparkling'
 export function onDelete() { onDisable(); }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
 else start();
+

@@ -5,7 +5,7 @@
   "optional": [],
   "js": "index.js",
   "author": "梨梨 · pear-winter",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "homePage": "https://github.com/pear-winter/li-sparkling",
   "auto_update": true,
   "hooks": {
@@ -14,3 +14,4 @@
     "delete": "onDelete"
   }
 }
+
