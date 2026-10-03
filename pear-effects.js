@@ -1,5 +1,14 @@
+import { drawMotif } from './ornaments.js';
 // Built-in bitmap lettering: no remote font, no missing Chinese glyph on phones.
 const glyphs={
+"野":["0011111101111110", "0010100100000010", "0010100100100100", "0011111100011000", "0010100100001000", "0010100101111111", "0011111100001001", "0000100000001010", "0000100000001000", "0011111100001000", "0000100000001000", "0000100000001000", "0000111100001000", "0111000001110000", "0000000000000000", "0000000000000000"],
+"陈":["1111100010000000", "1000100010000000", "1001011111111110", "1001000100000000", "1010001000000000", "1001001001000000", "1001010001000000", "1001011111111100", "1000100001000000", "1000100001000000", "1011000101010000", "1000000101001000", "1000001001000100", "1000010001000010", "1000000101000000", "1000000010000000"],
+"白":["0000000100000000", "0000000100000000", "0000001000000000", "0011111111111100", "0010000000000100", "0010000000000100", "0010000000000100", "0010000000000100", "0011111111111100", "0010000000000100", "0010000000000100", "0010000000000100", "0010000000000100", "0011111111111100", "0010000000000100", "0000000000000000"],
+"川":["0000100000000010", "0000100001000010", "0000100001000010", "0000100001000010", "0000100001000010", "0000100001000010", "0000100001000010", "0000100001000010", "0000100001000010", "0000100001000010", "0000100001000010", "0001000001000010", "0001000001000010", "0001000000000010", "0010000000000010", "0000000000000000"],
+
+"酒":["0100000000000000", "0010011111111111", "0001000001010000", "0000000001010000", "0100001111111110", "0010001001010010", "0001001001010010", "0000001010010010", "0000101100001110", "0000101000000010", "0001001111111110", "0001001000000010", "0010001000000010", "0010001111111110", "0100001000000010", "0000000000000000"],
+"酿":["1111111000010000", "0010100000001000", "0010100001111110", "1111111001000010", "1010101001111110", "1010101001000010", "1010101001000010", "1100111001111110", "1000001001001000", "1111111001001001", "1000001001000110", "1000001001000100", "1000001001001010", "1111111001010001", "1000001001100001", "0000000000000000"],
+
 "老":["0000000010000000", "0000000010000000", "0001111111111010", "0000000010000100", "0000000010001000", "0000000010010000", "0011111111111111", "0000000001000000", "0000000110000000", "0000111000001110", "0111001001110000", "0000001110000000", "0000001000000001", "0000001000000001", "0000000111111110", "0000000000000000"],
  "公":["0000010000010000", "0000010000010000", "0000100000001000", "0000100000001000", "0001000010000100", "0001000010000100", "0010000010000010", "0100000100000001", "0000000100100000", "0000001000010000", "0000001000010000", "0000010000001000", "0000100011110100", "0011111110000100", "0000000000000100", "0000000000000000"],
  "草":["0000100000000000", "1111111111111110", "0000100000110000", "0000100000110000", "0011111111111100", "0010000000001100", "0011111111111100", "0010000000001100", "0010000000001100", "0011111111111100", "0000000110000000", "1111111111111110", "0000000110000000", "0000000100000000", "0000000100000000", "0000000000000000"],
@@ -29,6 +38,9 @@ const glyphs={
  ],
 };
 export const textPacks=[
+{"id": "lili-pear-chenye", "name": "陈野！ · 像素字与叠色十字架", "label": "陈野！", "companions": "cross", "motion": "pixel-text", "colors": ["#111111", "#e52d40"], "images": [], "count": 6, "size": 46, "duration": 2300, "spread": 95, "lift": 65, "shape": "square", "glow": 0},
+{"id": "lili-pear-shirakawa", "name": "白川！ · 像素字与叠色十字架", "label": "白川！", "companions": "cross", "motion": "pixel-text", "colors": ["#111111", "#ffffff"], "images": [], "count": 6, "size": 46, "duration": 2300, "spread": 95, "lift": 65, "shape": "square", "glow": 0},
+ {id:'lili-pear-jiuniang',name:'酒酿！ · 白深粉像素字与小花',label:'酒酿！',companions:'flower',colors:['#ffffff','#c72570'],size:44},
  {id:'lili-pear-word',name:'梨 · 绿白像素字与小梨',label:'梨',companions:'pear',colors:['#a9cf56','#ffffff'],size:48},
  {id:'lili-pear-hanari',name:'Hanari！ · 红黑像素字与蝴蝶',label:'Hanari！',companions:'butterfly',colors:['#e13b46','#111111'],size:28},
  {id:'lili-pear-lumi',name:'Lumi！ · 白粉像素字与蝴蝶',label:'Lumi！',companions:'butterfly',colors:['#ffffff','#f2a7cd'],size:28},
@@ -91,7 +103,7 @@ export function spawnText(pack,x,y,amount,now,scale,lightweight,width=Infinity,h
  const cy=Math.max(size+24,Math.min(height-size-20,y));
  const items=[{kind:'pear-text',role:'label',x:cx,y:cy,start:now,duration:pack.duration,size,label:pack.label,colors:pack.colors,lift:Math.min(pack.lift*scale,Math.max(0,cy-size-12))}];
  const n=lightweight?2:4;
- for(let i=0;i<n;i++)items.push({kind:'pear-text',role:pack.companions,x:cx,y:cy,start:now+i*45,duration:pack.duration-120,src:pack.images?.[i%pack.images.length],size:(pack.companions==='sprite'?31:pack.companions==='pear'?21:19)*scale,color:pack.colors[i%2],phase:i*2.4,dx:(i%2?1:-1)*(w/2+14+(i>1?18:0)),dy:-(40+i*16)*scale});
+ for(let i=0;i<n;i++)items.push({kind:'pear-text',role:pack.companions,x:cx,y:cy,start:now+i*45,duration:pack.duration-120,src:pack.images?.[i%pack.images.length],size:(pack.companions==='sprite'?31:pack.companions==='pear'?21:19)*scale,color:pack.colors[i%2],colors:pack.colors,phase:i*2.4,dx:(i%2?1:-1)*(w/2+14+(i>1?18:0)),dy:-(40+i*16)*scale});
  for(let i=0;i<(lightweight?3:7);i++)items.push({kind:'pear-text',role:'dust',x:cx,y:cy,start:now+i*20,duration:1300,size:(1.5+i%3)*scale,color:pack.colors[i%2],phase:i*2.4,dx:Math.cos(i*2.4)*(w/2+25),dy:Math.sin(i*2.4)*32-35});
  return items;
 }
@@ -105,6 +117,8 @@ export function drawTextParticle(ctx,p,now){
   ctx.translate(p.x+p.dx*(1+.1*spread)+sway*5,p.y+p.dy*spread);
   if(p.role==='butterfly'){ctx.rotate(Math.sin(t*6+p.phase)*.2);butterfly(ctx,p.size,p.color,t*20+p.phase);}
   else if(p.role==='sprite'&&p.src){const r=decorationImage(ctx.canvas.ownerDocument,p.src);if(r.ready){ctx.rotate(Math.sin(t*5+p.phase)*.2);ctx.imageSmoothingEnabled=false;const w=r.image.naturalWidth,h=r.image.naturalHeight,k=p.size/Math.max(w,h);ctx.drawImage(r.image,-w*k/2,-h*k/2,w*k,h*k);}}
+  else if(p.role==='cross'){ctx.rotate(Math.sin(t*5+p.phase)*.18);const u=p.size/13;ctx.scale(u,u);for(const [color,d]of [[p.colors[1],1.5],[p.colors[0],0]]){ctx.fillStyle=color;ctx.fillRect(-1.5+d,-8+d,3,16);ctx.fillRect(-5.5+d,-3+d,11,3);}}
+  else if(p.role==='flower'){ctx.rotate(p.phase+t*.9);drawMotif(ctx,'flower',p.size,p.colors[1]);}
   else if(p.role==='leaf'){ctx.rotate(t*1.8+p.phase);ctx.scale(p.size/22,p.size/22);ctx.fillStyle=p.color;ctx.beginPath();ctx.moveTo(-10,7);ctx.quadraticCurveTo(-12,-9,10,-8);ctx.quadraticCurveTo(12,8,-10,7);ctx.fill();ctx.strokeStyle='#609542';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(-10,7);ctx.lineTo(7,-6);ctx.stroke();}
   else if(p.role==='pear'){ctx.rotate(Math.sin(t*5+p.phase)*.2);drawPearEmoji(ctx,p.size);}
   else{ctx.globalAlpha*=.45+.55*Math.sin(t*12+p.phase)**2;ctx.fillStyle=p.color;ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size);}

@@ -1,3 +1,4 @@
+import { butterflyTrails, makeButterflyTrail, drawButterflyTrail } from './butterfly-trails.js';
 import { textPacks, pearTrail, preparePearEmoji, prepareTextImages, supportedLabels, spawnText, drawTextParticle, drawPearEmoji, drawPearTrail } from './pear-effects.js';
 import { clearWaterCache } from './water.js';
 import { ASSETS, butterflyPacks } from './assets.js';
@@ -45,7 +46,7 @@ function validatePack(p){
  if(p.shape!==undefined){if(!['square','circle','diamond','star'].includes(p.shape))throw Error('不支持的粒子形状。');v.shape=p.shape;}
  if(p.motion!==undefined){if(!['flutter','fall','bubble','snow','music','ripple','wave','fountain','glitter','blossom','pixel-text'].includes(p.motion))throw Error('不支持的运动方式。');v.motion=p.motion;}
  if(p.sparkles!==undefined){if(typeof p.sparkles!=='boolean')throw Error('小粒子开关无效。');v.sparkles=p.sparkles;}
- if(p.motion==='pixel-text'){if(!supportedLabels.includes(p.label)||!['pear','butterfly','leaf','sprite'].includes(p.companions)||p.colors.length<2)throw Error('像素字或伴随图案无效。');if(p.companions==='sprite'&&!p.images.length)throw Error('缺少伴随图片。');v.label=p.label;v.companions=p.companions;}
+ if(p.motion==='pixel-text'){if(!supportedLabels.includes(p.label)||!['pear','butterfly','leaf','sprite','flower','cross'].includes(p.companions)||p.colors.length<2)throw Error('像素字或伴随图案无效。');if(p.companions==='sprite'&&!p.images.length)throw Error('缺少伴随图片。');v.label=p.label;v.companions=p.companions;}
  if(p.paired!==undefined){if(typeof p.paired!=='boolean'||(p.paired&&(p.images.length<2||p.images.length%2)))throw Error('双蝶标记无效。');v.paired=p.paired;}
  if(p.hues!==undefined){if(!Array.isArray(p.hues)||p.hues.length!==p.images.length||p.hues.some(h=>!Number.isFinite(h)||Math.abs(h)>360))throw Error('素材色相无效。');v.hues=[...p.hues];}
  if(p.glow!==undefined){if(!Number.isFinite(p.glow)||p.glow<0||p.glow>20)throw Error('发光强度需要 0～20。');v.glow=p.glow;}
@@ -74,7 +75,7 @@ const trailPacks=[
  {id:'neon',name:'赛博霓虹 · 光丝',colors:['#00f5ff','#ff21d0','#aa55ff'],glow:10},
  {id:'mono',name:'黑白 · 银线',colors:['#171717','#ffffff','#a8a8a8'],glow:0},
  {id:'pear',name:'梨梨 · 黄绿糖丝',colors:['#ffe66d','#a9dc65','#fff5bd'],glow:3},
- {id:'aurora',name:'极光 · 蓝紫流光',colors:['#a0e7ff','#baadff','#f3cbff'],glow:7}, ...ornamentTrails, pearTrail
+ {id:'aurora',name:'极光 · 蓝紫流光',colors:['#a0e7ff','#baadff','#f3cbff'],glow:7}, ...ornamentTrails, pearTrail, ...butterflyTrails
 ];
 const selectedTrail=()=>trailPacks.find(p=>p.id===prefs.trailSelected)||trailPacks[0];
 let trails=[],trailSession=0;
@@ -233,7 +234,7 @@ function burst(x,y,target,force=false){
 }
 function drawTrails(now){
  trails=trails.filter(p=>now-p.time<p.duration);ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
- for(const p of trails){if(p.motif==='pear-emoji'){drawPearTrail(ctx,p,now);continue;}if(p.motif){drawOrnamentTrail(ctx,p,now);continue;}const t=(now-p.time)/p.duration,alpha=Math.pow(1-t,1.7);ctx.globalAlpha=alpha;
+ for(const p of trails){if(p.motif==='butterfly'){drawButterflyTrail(ctx,p,now);continue;}if(p.motif==='pear-emoji'){drawPearTrail(ctx,p,now);continue;}if(p.motif){drawOrnamentTrail(ctx,p,now);continue;}const t=(now-p.time)/p.duration,alpha=Math.pow(1-t,1.7);ctx.globalAlpha=alpha;
   for(let i=0;i<p.amount;i++){const offset=(i-(p.amount-1)/2)*3*p.size,dx=p.x-p.px,dy=p.y-p.py,len=Math.hypot(dx,dy)||1,nx=-dy/len*offset,ny=dx/len*offset,color=p.colors[i%p.colors.length];ctx.strokeStyle=color;ctx.shadowColor=color;ctx.shadowBlur=p.glow;ctx.lineWidth=(1.8-i*.16)*p.size*(1-t*.55);ctx.beginPath();ctx.moveTo(p.px+nx,p.py+ny);ctx.quadraticCurveTo((p.px+p.x)/2+nx,(p.py+p.y)/2+ny,p.x+nx,p.y+ny);ctx.stroke();}
  }ctx.restore();
 }
@@ -244,7 +245,7 @@ function trailMove(x,y,target,state){
  const rect=!trails.length?raise(target):layer.getBoundingClientRect(),point={x:x-rect.left,y:y-rect.top,time:now,session:trailSession};state.last=point;
  if(!prev||prev.session!==trailSession||now-prev.time>140||Math.hypot(point.x-prev.x,point.y-prev.y)>160)return;
  if(Math.hypot(point.x-prev.x,point.y-prev.y)<2){state.last=prev;return;}
- const p=selectedTrail();if(p.motif&&state.emitted&&state.emitted.session===trailSession&&now-state.emitted.time<(p.motif==='pear-emoji'?85:p.motif==='wave'?85:35))return;state.emitted=point;trails.push({...point,motif:p.motif,phase:Math.random()*Math.PI*2,px:prev.x,py:prev.y,duration:prefs.trailDuration,amount:prefs.lightweight?1:Math.round(prefs.trailAmount),size:prefs.trailSize,colors:p.colors,glow:prefs.lightweight?0:p.glow});trails=trails.slice(-80);if(!raf)raf=host.requestAnimationFrame(frame);
+ const p=selectedTrail();if(p.motif&&state.emitted&&state.emitted.session===trailSession&&now-state.emitted.time<(p.motif==='butterfly'?(prefs.lightweight?110:70):p.motif==='pear-emoji'?85:p.motif==='wave'?85:35))return;state.emitted=point;const butterflies=p.motif==='butterfly'?makeButterflyTrail(p,Math.round(prefs.trailAmount),prefs.lightweight,loadImage):null;trails.push({...point,butterflies,motif:p.motif,phase:Math.random()*Math.PI*2,px:prev.x,py:prev.y,duration:prefs.trailDuration,amount:prefs.lightweight?1:Math.round(prefs.trailAmount),size:prefs.trailSize,colors:p.colors,glow:prefs.lightweight?0:p.glow});trails=trails.slice(-80);if(!raf)raf=host.requestAnimationFrame(frame);
 }
 function clearTrail(){trails=[];trailSession++;}
 function inputHit(x,y,target,kind){totalHits++;lastInput=kind;lastActive=Date.now();if(!target?.closest?.('[data-lpx-preview]'))burst(x,y,target);}
@@ -349,7 +350,7 @@ function openManager(page='gallery',container=null){
  function renderTrails(){
  const row=el('label','lpx-row'),toggle=el('input');toggle.type='checkbox';toggle.checked=!!prefs.trailEnabled;row.append(toggle,doc.createTextNode('滑动拖尾'));listen(toggle,'change',()=>{prefs.trailEnabled=toggle.checked;clearTrail();persist();});body.append(row,el('p','lpx-muted','选一种拖尾，在下方试滑；手机滑动页面时也会留下拖尾。'));
  const grid=el('div','lpx-gallery');body.append(grid);
- for(const p of trailPacks){const card=el('article','lpx-card'+(selectedTrail().id===p.id?' is-selected':'')),thumb=button('',()=>{prefs.trailSelected=p.id;prefs.trailEnabled=true;clearTrail();persist();show('trails');tell('正在使用：'+p.name);},'lpx-thumb');thumb.setAttribute('aria-label','使用拖尾 '+p.name);thumb.dataset.lpxPreview='true';card.dataset.trailId=p.id;if(p.motif){thumb.classList.add('lpx-contrast');thumb.append(motifPreview(p.motif,p.colors));}else for(let i=0;i<3;i++){const line=el('i');line.style.cssText=`position:absolute;left:15%;top:${35+i*13}%;width:70%;height:2px;background:${p.colors[i]};transform:rotate(-12deg);border-radius:99px;box-shadow:0 0 ${p.glow}px ${p.colors[i]}`;thumb.append(line);}card.append(thumb,el('div','lpx-card-title',p.name));grid.append(card);}
+ for(const p of trailPacks){const card=el('article','lpx-card'+(selectedTrail().id===p.id?' is-selected':'')),thumb=button('',()=>{prefs.trailSelected=p.id;prefs.trailEnabled=true;clearTrail();persist();show('trails');tell('正在使用：'+p.name);},'lpx-thumb');thumb.setAttribute('aria-label','使用拖尾 '+p.name);thumb.dataset.lpxPreview='true';card.dataset.trailId=p.id;if(p.motif==='butterfly'){thumb.classList.add('lpx-contrast');for(let i=0;i<4;i++){const img=el('img');img.src=p.images[i];img.alt='';img.style.cssText=`left:${12+i*22}%;top:${25+i%2*22}%;filter:hue-rotate(${p.hues?.[i]||0}deg)`;thumb.append(img);}}else if(p.motif){thumb.classList.add('lpx-contrast');thumb.append(motifPreview(p.motif,p.colors));}else for(let i=0;i<3;i++){const line=el('i');line.style.cssText=`position:absolute;left:15%;top:${35+i*13}%;width:70%;height:2px;background:${p.colors[i]};transform:rotate(-12deg);border-radius:99px;box-shadow:0 0 ${p.glow}px ${p.colors[i]}`;thumb.append(line);}card.append(thumb,el('div','lpx-card-title',p.name));grid.append(card);}
  const pad=el('div','lpx-trail-pad','在这里滑一滑 ✧');pad.dataset.lpxPreview='true';body.append(pad,button('调整拖尾数量与大小',()=>show('settings')));
  }
  function renderUpload(){
@@ -446,7 +447,7 @@ listen(doc,'visibilitychange',()=>{if(!doc.hidden)recoverEntries();else{particle
 listen(doc,'pointerdown',e=>{if(e.target?.closest?.('#extensionsMenuButton,#extensions-settings-button,#extensionsMenu,#extensions_settings,#extensions_settings2'))recoverEntries();},{capture:true,passive:true});
 listen(doc,'click',e=>{if(e.target?.closest?.('#extensionsMenuButton,#extensions-settings-button'))recoverEntries();},{capture:true,passive:true});
 function destroy(){if(stopped)return;stopped=true;clearWaterCache();clearTrail();particles=[];abort.abort();observer.disconnect();host.clearInterval(interval);timers.forEach(id=>host.clearTimeout(id));if(raf)host.cancelAnimationFrame(raf);if(scanFrame)host.cancelAnimationFrame(scanFrame);closeManager();layer.remove();sheet.remove();panelEntry?.remove();wandEntry?.remove();disposers.forEach(fn=>{try{fn();}catch{}});if(host[KEY]?.destroy===destroy)delete host[KEY];if(host.__liSparkling?.destroy===destroy){delete host.__liSparkling;host.dispatchEvent(new host.Event('li-sparkling:change'));}}
-host[KEY]={owner:'li-sparkling',apiVersion:1,version:'2.5.0',isAvailable:()=>!stopped,mount:container=>openManager('gallery',container),unmount:container=>{if(container&&manager?.parentElement===container)closeManager();},destroy,openManager,importPacks,renamePack,deletePack,exportPack:async()=>({format:'lili-click-effects',version:1,packs:[await portablePack(selected())]}),getDiagnostics:()=>({hits:totalHits,input:lastInput,particles:particles.length,trails:trails.length,trail:selectedTrail().id,trailEnabled:prefs.trailEnabled,canvasReady:!!ctx,theme:themeActive(),pack:selected().id,images:selected().images.map((s,i)=>({ready:loadImage(s,selected().hues?.[i]||0).ready,error:loadImage(s,selected().hues?.[i]||0).error}))})};
+host[KEY]={owner:'li-sparkling',apiVersion:1,version:'2.6.0',isAvailable:()=>!stopped,mount:container=>openManager('gallery',container),unmount:container=>{if(container&&manager?.parentElement===container)closeManager();},destroy,openManager,importPacks,renamePack,deletePack,exportPack:async()=>({format:'lili-click-effects',version:1,packs:[await portablePack(selected())]}),getDiagnostics:()=>({hits:totalHits,input:lastInput,particles:particles.length,trails:trails.length,trail:selectedTrail().id,trailEnabled:prefs.trailEnabled,canvasReady:!!ctx,theme:themeActive(),pack:selected().id,images:selected().images.map((s,i)=>({ready:loadImage(s,selected().hues?.[i]||0).ready,error:loadImage(s,selected().hues?.[i]||0).error}))})};
 host.__liSparkling=host[KEY];
 host.dispatchEvent(new host.Event('li-sparkling:change'));
 if(window!==host){

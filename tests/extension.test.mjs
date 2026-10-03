@@ -22,7 +22,7 @@ const errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.goto(url);await page.waitForFunction(()=>window.__liliPixelV2?.getDiagnostics().canvasReady);
  await page.locator('#lpx-panel button').click();
- assert.equal(await page.locator('.lpx-card').count(),42,'42 builtins');
+ assert.equal(await page.locator('.lpx-card').count(),45,'45 builtins');
  assert.equal(await page.evaluate(()=>document.querySelector('dialog').scrollWidth<=document.querySelector('dialog').clientWidth),true,'no horizontal overflow');
  // Load all textures independently; a single broken SVG/WebP must fail the test.
  const assets=await page.evaluate(async()=>{const {ASSETS,butterflyPacks}=await import('/assets.js');const {seasonalPacks}=await import('/seasonal.js');const srcs=[...new Set([...Object.values(ASSETS),...[...butterflyPacks,...seasonalPacks].flatMap(p=>p.images)])];await Promise.all(srcs.map(src=>{const img=new Image();img.src=src;return img.decode();}));return srcs.length;});
@@ -52,7 +52,7 @@ try{
   assert.equal(await page.evaluate(d=>window.__liSparkling.importPacks(d),pack),1);
   if(id==='lili-bf-pear-yellow'){assert(pack.packs[0].paired);assert(pack.packs[0].hues.every(h=>h===0));assert(pack.packs[0].images.every(s=>s.startsWith('data:image/png;base64,')));}
  }
- await page.getByRole('tab',{name:'02 · 拖尾'}).click();assert.equal(await page.locator('[data-trail-id]').count(),13);
+ await page.getByRole('tab',{name:'02 · 拖尾'}).click();assert.equal(await page.locator('[data-trail-id]').count(),23);
  await page.waitForTimeout(3600);
  for(const id of ['bubble','stars-black','stars-white','water','hearts-pink','stars-gold','flowers-blue']){
   await page.locator(`[data-trail-id="${id}"] .lpx-thumb`).click();
@@ -126,6 +126,6 @@ try{
  });
  await page.screenshot({path:path.join(artifacts,'builtin-preview.png'),fullPage:true});
  assert.deepEqual(errors,[]);
- console.log(`PASS: 42 builtins + groups + ripples + petal retirement; ${assets} local assets; mobile layout; new click/trail modes; centered diffusion; portable paired colors; export/import; legacy settings; menu recovery; touch/iframe; trails; lifecycle.\nArtifacts: ${artifacts}`);
+ console.log(`PASS: 45 builtins + groups + ripples + petal retirement; ${assets} local assets; mobile layout; new click/trail modes; centered diffusion; portable paired colors; export/import; legacy settings; menu recovery; touch/iframe; trails; lifecycle.\nArtifacts: ${artifacts}`);
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
 
