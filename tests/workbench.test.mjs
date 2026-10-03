@@ -20,7 +20,7 @@ try{
  await page.evaluate(()=>{window.__liliPixelV2={mount(){throw Error('Do not use legacy engine');}};});
  await page.getByRole('button',{name:'重新连接'}).click();assert.equal(await page.locator('.lpx-manager').count(),0);
  await page.evaluate(async()=>{window.extension=await import('/index.js');});
- await page.locator('.lpx-embedded').waitFor();assert.equal(await page.locator('.lpx-card').count(),73);
+ await page.locator('.lpx-embedded').waitFor();assert.equal(await page.locator('.lpx-card').count(),77);
  assert.equal(await page.locator('.lpx-close').count(),0,'embedded view uses workbench navigation');
  await page.getByRole('combobox',{name:'选择特效分组'}).selectOption('rain');assert.equal(await page.locator('.lpx-card').count(),4);
  await page.getByRole('tab',{name:'03 · 设置'}).click();await page.getByRole('slider',{name:'粒子大小',exact:true}).fill('1.7');

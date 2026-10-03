@@ -1,10 +1,10 @@
 {
   "name": "li-sparkling",
-  "version": "2.12.0",
+  "version": "2.13.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tests/extension.test.mjs && node tests/workbench.test.mjs && node tests/theme-water.test.mjs && node tests/pear.test.mjs && node tests/butterfly-trails.test.mjs && node tests/ordering.test.mjs && node tests/celebration.test.mjs && node tests/models.test.mjs && node tests/pairing.test.mjs && node tests/manga-stacking.test.mjs && node tests/handwritten.test.mjs"
+    "test": "node tests/extension.test.mjs && node tests/workbench.test.mjs && node tests/theme-water.test.mjs && node tests/pear.test.mjs && node tests/butterfly-trails.test.mjs && node tests/ordering.test.mjs && node tests/celebration.test.mjs && node tests/models.test.mjs && node tests/pairing.test.mjs && node tests/manga-stacking.test.mjs && node tests/handwritten.test.mjs && node tests/exclamation.test.mjs"
   },
   "devDependencies": {
     "playwright": "1.51.1"
