@@ -20,7 +20,7 @@ const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||u
 const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1,hasTouch:true,isMobile:true});
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
- await page.goto(url);await page.waitForFunction(()=>window.__liSparkling);await page.locator('#lpx-panel button').click();const ids=await page.evaluate(async()=> (await import('/celebration.js')).celebrationPacks.map(p=>p.id));assert.equal(ids.length,9);
+ await page.goto(url);await page.waitForFunction(()=>window.__liSparkling);await page.locator('#lpx-panel button').click();const ids=await page.evaluate(async()=> (await import('/celebration.js')).celebrationPacks.map(p=>p.id));assert.equal(ids.length,12);
  for(const id of ids){await page.locator(`[data-effect-id="${id}"] .lpx-thumb`).click();const pack=await page.evaluate(()=>window.__liSparkling.exportPack());assert.equal(pack.packs[0].id,id);assert.equal(await page.evaluate(p=>window.__liSparkling.importPacks(p),pack),1);}
  const checks=await page.evaluate(async()=>{
   const {celebrationPacks,spawnCelebration,drawCelebration}=await import('/celebration.js');const results=[];
@@ -28,6 +28,6 @@ try{
    for(const xy of [[0,0],[320,480]]){const q=spawnCelebration(p,...xy,6,0,2,false,320,480)[0];if(q.x<0||q.x>320||q.y<0||q.y>480)throw Error('bounds');}
   }return results;
  });for(const r of checks){assert(r.a.ink>30,r.id);assert.notEqual(r.a.sum,r.b.sum,r.id+' animates');assert.equal(r.a.corner,0);assert.equal(r.end.ink,0);assert.equal(r.before.ink,0);}
- await page.setViewportSize({width:1200,height:1050});
- await page.evaluate(async()=>{window.__liSparkling.destroy();document.body.replaceChildren();document.body.style='margin:0';const {celebrationPacks,spawnCelebration,drawCelebration}=await import('/celebration.js');const c=document.createElement('canvas');c.width=1200;c.height=1050;document.body.append(c);const ctx=c.getContext('2d');for(let i=0;i<9;i++){const x=i%3*400,y=Math.floor(i/3)*350;ctx.fillStyle='#f0eee5';ctx.fillRect(x,y,200,350);ctx.fillStyle='#1a2432';ctx.fillRect(x+200,y,200,350);for(const p of spawnCelebration(celebrationPacks[i],x+200,y+185,6,0,1.8,false,1200,1050))drawCelebration(ctx,p,850);}});await page.screenshot({path:path.join(artifacts,'celebration-effects.png')});assert.deepEqual(errors,[]);console.log('PASS: nine new motions render and animate on transparent canvas, expire, fit mobile bounds, import/export and previews.');
+ await page.setViewportSize({width:1200,height:1400});
+ await page.evaluate(async()=>{window.__liSparkling.destroy();document.body.replaceChildren();document.body.style='margin:0';const {celebrationPacks,spawnCelebration,drawCelebration}=await import('/celebration.js');const c=document.createElement('canvas');c.width=1200;c.height=1400;document.body.append(c);const ctx=c.getContext('2d');for(let i=0;i<celebrationPacks.length;i++){const x=i%3*400,y=Math.floor(i/3)*350;ctx.fillStyle='#f0eee5';ctx.fillRect(x,y,200,350);ctx.fillStyle='#1a2432';ctx.fillRect(x+200,y,200,350);for(const p of spawnCelebration(celebrationPacks[i],x+200,y+185,6,0,1.8,false,1200,1400))drawCelebration(ctx,p,850);}});await page.screenshot({path:path.join(artifacts,'celebration-effects.png')});assert.deepEqual(errors,[]);console.log('PASS: twelve celebration presets render and animate on transparent canvas, expire, fit mobile bounds, import/export and previews.');
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}

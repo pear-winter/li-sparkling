@@ -1,6 +1,9 @@
+import { whalePath } from './whale-path.js';
+import { drawPixelLabel, drawPearEmoji } from './pear-effects.js';
 import { drawMotif,drawStar } from './ornaments.js';
 import { knotPath } from './knot-path.js';
-export const celebrationMotions=['fireworks','orbit-heart','thinking-spark','rabbit-knot'];
+export const modelMotions=['thinking-spark','thinking-gpt','thinking-whale','thinking-gemini','rabbit-knot'];
+export const celebrationMotions=['fireworks','orbit-heart','pink-pear',...modelMotions];
 export const celebrationPacks=[
  ...[
   ['rainbow','缤纷',['#ff638e','#ffc35d','#86d886','#78bcff','#c69bff']],
@@ -12,10 +15,13 @@ export const celebrationPacks=[
  {id:'lili-orbit-heart-black',name:'黑色爱心 · 星环绕行',motion:'orbit-heart',colors:['#111111','#ffffff'],size:48},
  {id:'lili-orbit-heart-pink',name:'粉色爱心 · 星环绕行',motion:'orbit-heart',colors:['#ee9fbd','#fff2f8'],size:48},
  {id:'lili-pear-thinking',name:'小克 · 思考呼吸',motion:'thinking-spark',colors:['#e87952','#ffc6a5'],size:48},
- {id:'lili-pear-rabbit-gpt',name:'小兔挠挠哥哥 · GPT',motion:'rabbit-knot',colors:['#111111','#ffffff','#f5b5c9'],size:65},
+ {id:'lili-pear-rabbit-gpt',name:'GPT · 思考绳结',motion:'thinking-gpt',colors:['#111111','#ffffff','#f5b5c9'],size:65},
+ {id:'lili-pear-deepseek',name:'DeepSeek · 小鲸鱼思考',motion:'thinking-whale',colors:['#4d6bfe','#b4c4ff'],size:65},
+ {id:'lili-pear-gemini',name:'Gemini · 小星星思考',motion:'thinking-gemini',colors:['#168bff','#e83e62','#f7cc32','#19b985'],size:60},
+ {id:'lili-pear-pink-emoji',name:'粉色🍐 · 小梨绽放',motion:'pink-pear',colors:['#f3a6c6','#ffffff','#ffdbe9'],size:50},
 ].map(p=>({...p,images:[],count:6,duration:2400,spread:100,lift:55,shape:'star',glow:0}));
 export function spawnCelebration(pack,x,y,amount,now,scale,lightweight,width=Infinity,height=Infinity){
- const size=pack.size*scale*Math.min(1,width/300,height/260),pad=size*(pack.motion==='rabbit-knot'?1.2:1.7);
+ const size=Math.min(pack.size*scale,width/3.7,height/3.7),pad=size*1.7;
  return [{kind:'celebration',motion:pack.motion,x:Math.max(pad,Math.min(width-pad,x)),y:Math.max(pad,Math.min(height-pad,y)),start:now,duration:pack.duration,size,colors:pack.colors,lightweight,amount:Math.min(14,amount)}];
 }
 const TAU=Math.PI*2;
@@ -45,21 +51,31 @@ function thinking(ctx,p,t){
  for(let i=0;i<12;i++){const a=i/12*TAU,len=(23+7*Math.sin(i*3.1)+3*Math.sin(t*TAU*3-i*.6))*u;ctx.save();ctx.rotate(a);ctx.lineCap='round';ctx.lineWidth=(i%3===0?7:5)*u;ctx.strokeStyle=p.colors[0];ctx.beginPath();ctx.moveTo(4*u,0);ctx.lineTo(len,0);ctx.stroke();ctx.restore();}ctx.restore();
  for(let i=0;i<3;i++){ctx.globalAlpha=.25+.75*Math.max(0,Math.sin(t*TAU*3-i*.9));ctx.fillStyle=p.colors[0];ellipse(ctx,(i-1)*p.size*.22,p.size*.72,p.size*.04,p.size*.04);}ctx.globalAlpha=1;
 }
-let knot;
-function rabbit(ctx,p,t){
- const s=p.size/100,stroke=p.colors[0],paper=p.colors[1];ctx.save();ctx.scale(s,s);ctx.translate(-8,13);
- knot??=new Path2D(knotPath);ctx.save();ctx.translate(-43,-39);ctx.scale(86/512,86/512);ctx.fillStyle=stroke;ctx.fill(knot);ctx.restore();
- const scratch=Math.sin(t*TAU*5),bob=Math.sin(t*TAU*2)*2;
- ctx.translate(30,-36+bob);ctx.fillStyle=stroke;ellipse(ctx,5,19,16,21,-.3);ellipse(ctx,18,25,6,6);
- // Long ears and small cheeks distinguish the rabbit from a cat.
- ctx.save();ctx.rotate(Math.sin(t*TAU*2)*.06);ellipse(ctx,-9,-25,6,22,-.14);ellipse(ctx,7,-25,6,24,.12);ctx.fillStyle=p.colors[2];ellipse(ctx,-9,-27,2.2,14,-.14);ellipse(ctx,7,-27,2.2,16,.12);ctx.restore();
- ctx.fillStyle=stroke;ellipse(ctx,0,-5,20,19);ctx.fillStyle=paper;const blink=Math.sin(t*TAU*2)> .97?1:3.5;ellipse(ctx,-7,-7,2.4,blink);ellipse(ctx,7,-7,2.4,blink);ellipse(ctx,0,0,2,1.5);ctx.strokeStyle=paper;ctx.lineWidth=1.7;ctx.beginPath();ctx.moveTo(-4,3);ctx.quadraticCurveTo(0,7,4,3);ctx.stroke();
- ctx.save();ctx.translate(-9,14);ctx.rotate(-.7+scratch*.45);ctx.fillStyle=stroke;ellipse(ctx,-8,6,12,6,.1);ctx.strokeStyle=paper;ctx.lineWidth=1.1;for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(-15+i*3,5);ctx.lineTo(-14+i*3,8);ctx.stroke();}ctx.restore();
- if(scratch>.1){ctx.strokeStyle=p.colors[2];ctx.lineWidth=1.7;for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(-33+i*5,25);ctx.lineTo(-36+i*5,32+scratch*3);ctx.stroke();}}
+let knot,whale;
+function model(ctx,p,t){
+ ctx.save();ctx.translate(0,Math.sin(t*TAU*2)*p.size*.045);
+ if(p.motion==='thinking-whale'){
+  whale??=new Path2D(whalePath);ctx.rotate(Math.sin(t*TAU*2)*.09);ctx.scale(p.size/24,p.size/24);ctx.translate(-12,-12);ctx.fillStyle=p.colors[0];ctx.fill(whale,'evenodd');
+ }else if(p.motion==='thinking-gemini'){
+  ctx.rotate(Math.sin(t*TAU)*.09);const r=p.size*.55;ctx.beginPath();ctx.moveTo(0,-r);ctx.bezierCurveTo(r*.22,-r*.22,r*.22,-r*.22,r,0);ctx.bezierCurveTo(r*.22,r*.22,r*.22,r*.22,0,r);ctx.bezierCurveTo(-r*.22,r*.22,-r*.22,r*.22,-r,0);ctx.bezierCurveTo(-r*.22,-r*.22,-r*.22,-r*.22,0,-r);ctx.closePath();ctx.clip();
+  ctx.fillStyle=p.colors[0];ctx.fillRect(-r,-r,r*2,r*2);
+  for(const [x,y,c]of [[0,-r,p.colors[1]],[-r,0,p.colors[2]],[0,r,p.colors[3]]]){const g=ctx.createRadialGradient(x,y,0,x,y,r*1.35);g.addColorStop(0,c);g.addColorStop(1,c+'00');ctx.fillStyle=g;ctx.fillRect(-r,-r,r*2,r*2);}
+  ctx.fillStyle='#ffffff';ctx.globalAlpha*=.15*Math.max(0,Math.sin(t*TAU*2));ctx.fillRect(-r,-r,r*2,r*2);
+ }else{
+  knot??=new Path2D(knotPath);ctx.rotate(Math.sin(t*TAU*1.5)*.08);ctx.scale(p.size/512,p.size/512);ctx.translate(-256,-256);ctx.fillStyle=p.colors[0];ctx.fill(knot);
+ }
  ctx.restore();
+ const alpha=ctx.globalAlpha;for(let i=0;i<3;i++){ctx.globalAlpha=alpha*(.2+.8*Math.max(0,Math.sin(t*TAU*3-i*.9)));ctx.fillStyle=p.colors[i%p.colors.length];ellipse(ctx,(i-1)*p.size*.18,p.size*.68,p.size*.035,p.size*.035);}ctx.globalAlpha=alpha;
+}
+export function drawModelSymbols(ctx,p,t){
+ const labels=(p.overlays||[]).filter(x=>['？','！','…'].includes(x));
+ for(let i=0;i<labels.length;i++){const a=-Math.PI*.8+i*Math.PI*.3;ctx.save();ctx.translate(Math.cos(a)*p.size*.87,Math.sin(a)*p.size*.83+Math.sin(t*TAU*3+i)*3);drawPixelLabel(ctx,labels[i],p.size*.3,['#ef404b','#ffffff']);ctx.restore();}
+}
+function pinkPears(ctx,p,t){
+ for(let i=0;i<(p.lightweight?2:4);i++){const a=i*2.4,r=p.size*(.15+t*.65);ctx.save();ctx.translate(Math.cos(a)*r,Math.sin(a)*r*.6-t*p.size*.2);ctx.rotate(Math.sin(t*4+i)*.18);drawPearEmoji(ctx,p.size*.48,true);ctx.restore();}
 }
 export function drawCelebration(ctx,p,now){
  const t=(now-p.start)/p.duration;if(t<0||t>=1)return;ctx.save();ctx.translate(p.x,p.y);const alpha=Math.min(1,t/.06)*Math.min(1,(1-t)/.22);ctx.globalAlpha=alpha;
- if(p.motion==='fireworks')fireworks(ctx,p,t);else{const breathe=1+Math.sin(t*TAU*2)*.04;ctx.scale(breathe,breathe);if(p.motion==='orbit-heart')orbit(ctx,p,t);else if(p.motion==='thinking-spark')thinking(ctx,p,t);else rabbit(ctx,p,t);}
- ctx.globalAlpha=alpha;ctx.save();dust(ctx,p,t);ctx.restore();ctx.restore();
+ if(p.motion==='fireworks')fireworks(ctx,p,t);else{const breathe=1+Math.sin(t*TAU*2)*.04;ctx.scale(breathe,breathe);if(p.motion==='orbit-heart')orbit(ctx,p,t);else if(p.motion==='thinking-spark')thinking(ctx,p,t);else if(p.motion==='pink-pear')pinkPears(ctx,p,t);else model(ctx,p,t);}
+ ctx.globalAlpha=alpha;if(modelMotions.includes(p.motion))drawModelSymbols(ctx,p,t);ctx.save();dust(ctx,p,t);ctx.restore();ctx.restore();
 }

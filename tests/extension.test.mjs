@@ -22,7 +22,7 @@ const errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.goto(url);await page.waitForFunction(()=>window.__liliPixelV2?.getDiagnostics().canvasReady);
  await page.locator('#lpx-panel button').click();
- assert.equal(await page.locator('.lpx-card').count(),63,'63 builtins');
+ assert.equal(await page.locator('.lpx-card').count(),67,'67 builtins');
  assert.equal(await page.evaluate(()=>document.querySelector('dialog').scrollWidth<=document.querySelector('dialog').clientWidth),true,'no horizontal overflow');
  // Load all textures independently; a single broken SVG/WebP must fail the test.
  const assets=await page.evaluate(async()=>{const {ASSETS,butterflyPacks}=await import('/assets.js');const {seasonalPacks}=await import('/seasonal.js');const srcs=[...new Set([...Object.values(ASSETS),...[...butterflyPacks,...seasonalPacks].flatMap(p=>p.images)])];await Promise.all(srcs.map(src=>{const img=new Image();img.src=src;return img.decode();}));return srcs.length;});
@@ -52,7 +52,7 @@ try{
   assert.equal(await page.evaluate(d=>window.__liSparkling.importPacks(d),pack),1);
   if(id==='lili-bf-pear-yellow'){assert(pack.packs[0].paired);assert(pack.packs[0].hues.every(h=>h===0));assert(pack.packs[0].images.every(s=>s.startsWith('data:image/png;base64,')));}
  }
- await page.getByRole('tab',{name:'02 · 拖尾'}).click();assert.equal(await page.locator('[data-trail-id]').count(),23);
+ await page.getByRole('tab',{name:'02 · 拖尾'}).click();assert.equal(await page.locator('[data-trail-id]').count(),24);
  await page.waitForTimeout(3600);
  for(const id of ['bubble','stars-black','stars-white','water','hearts-pink','stars-gold','flowers-blue']){
   await page.locator(`[data-trail-id="${id}"] .lpx-thumb`).click();
@@ -103,13 +103,13 @@ try{
  const groupFilter=page.getByRole('combobox',{name:'选择特效分组'});
  await groupFilter.selectOption('butterflies');assert.equal(await page.locator('.lpx-card').count(),10);
  await groupFilter.selectOption('rain');assert.equal(await page.locator('.lpx-card').count(),4);
- await page.locator('.lpx-group-editor summary').click();await page.getByRole('textbox',{name:'分组名称'}).fill('雨夜收藏');await page.getByRole('button',{name:'新建分组',exact:true}).click();
+ await page.getByText('管理分组',{exact:true}).click();await page.getByRole('textbox',{name:'分组名称'}).fill('雨夜收藏');await page.getByRole('button',{name:'新建分组',exact:true}).click();
  const newGroup=await groupFilter.inputValue();assert(newGroup.startsWith('group-'));assert.equal(await page.locator('.lpx-card').count(),0);
  await groupFilter.selectOption('all');await page.getByRole('combobox',{name:'移动 白雨 · 落水涟漪 到分组',exact:true}).selectOption(newGroup);
  await groupFilter.selectOption(newGroup);assert.equal(await page.locator('.lpx-card').count(),1);
  await page.getByRole('textbox',{name:'分组名称'}).fill('我的雨夜');await page.getByRole('button',{name:'重命名当前组'}).click();
  await page.reload();await page.waitForFunction(()=>window.__liliPixelV2);await page.locator('#lpx-panel button').click();assert.equal(await groupFilter.inputValue(),newGroup);assert.equal(await page.locator('.lpx-card').count(),1);assert((await groupFilter.locator('option:checked').textContent()).includes('我的雨夜'));
- await page.locator('.lpx-group-editor summary').click();await page.getByRole('button',{name:'删除当前组'}).click();assert.equal(await groupFilter.inputValue(),'ungrouped');assert.equal(await page.locator('[data-effect-id="lili-ripple-white"]').count(),1);
+ await page.getByText('管理分组',{exact:true}).click();await page.getByRole('button',{name:'删除当前组'}).click();assert.equal(await groupFilter.inputValue(),'ungrouped');assert.equal(await page.locator('[data-effect-id="lili-ripple-white"]').count(),1);
  await groupFilter.selectOption('all');await page.getByRole('combobox',{name:'移动 白雨 · 落水涟漪 到分组',exact:true}).selectOption('rain');await groupFilter.selectOption('rain');
  await page.screenshot({path:path.join(artifacts,'mobile-groups-rain.png')});
  // New procedural effects are portable and accepted by the current importer.
@@ -126,6 +126,6 @@ try{
  });
  await page.screenshot({path:path.join(artifacts,'builtin-preview.png'),fullPage:true});
  assert.deepEqual(errors,[]);
- console.log(`PASS: 63 builtins + groups + ripples + petal retirement; ${assets} local assets; mobile layout; new click/trail modes; centered diffusion; portable paired colors; export/import; legacy settings; menu recovery; touch/iframe; trails; lifecycle.\nArtifacts: ${artifacts}`);
+ console.log(`PASS: 67 builtins + groups + ripples + petal retirement; ${assets} local assets; mobile layout; new click/trail modes; centered diffusion; portable paired colors; export/import; legacy settings; menu recovery; touch/iframe; trails; lifecycle.\nArtifacts: ${artifacts}`);
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
 

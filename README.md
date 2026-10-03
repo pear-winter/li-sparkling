@@ -1,6 +1,6 @@
 # 梨梨 · 点击与拖尾特效
 
-SillyTavern 原生前端扩展，版本 **2.8.0**。点击绽放小图案，滑动留下细细的拖尾；手机触屏和电脑鼠标都可用。
+SillyTavern 原生前端扩展，版本 **2.9.0**。点击绽放小图案，滑动留下细细的拖尾；手机触屏和电脑鼠标都可用。
 
 ## 安装
 
@@ -20,7 +20,7 @@ https://github.com/pear-winter/li-sparkling
 
 ## 内置特效
 
-共 **63 款点击特效 + 23 组拖尾**。
+共 **67 款点击特效 + 24 组拖尾**。
 
 | 类别 | 款式与表现 |
 | --- | --- |
@@ -175,3 +175,11 @@ python3 scripts/generate-seasonal.py
 - 小克：橙色长短光芒呼吸转动、三个思考点依次跳动；这是点击动画，不读取模型推理状态。
 - 小兔挠挠哥哥：GPT 绳结图标配长耳小兔，耳朵摇动、眨眼、抬爪挠挠；没有小猫。两款在梨梨组。以上均有小粒子，支持轻量模式。
 - GPT 绳结路径使用 Font Awesome Free 7.3.1 的 OpenAI 图标（Copyright 2026 Fonticons, Inc., CC BY 4.0），来源 https://github.com/FortAwesome/Font-Awesome/blob/7.x/svgs/brands/openai.svg ，许可 https://creativecommons.org/licenses/by/4.0/ 。新增兔子和动画为本扩展绘制。
+
+## 2.9.0 更新
+
+- 去掉 GPT 的兔子，原预设直接升级为 GPT 思考绳结，保留选择、收藏与排序；历史 rabbit-knot 动画也只绘制绳结。
+- 新增 DeepSeek 蓝色小鲸鱼和 Gemini 渐变四角星的呼吸、摆动、思考点动画。
+- 点击页「模型 + 符号叠加」可勾选 ？／！／…，支持多个一起出现，适用于 GPT、小克、DeepSeek、Gemini；选择自动保存。这些是点击动画，不与实际模型推理状态联动。省略号也可单独选用。
+- 新增粉色 🍐 点击特效与拖尾，复用 Twemoji 小梨轮廓，只改果肉颜色，均附小粒子。
+- DeepSeek 路径来自 Lobe Icons（MIT，见 assets/Lobe-Icons-LICENSE.txt）：https://github.com/lobehub/lobe-icons/blob/master/packages/static-svg/icons/deepseek.svg 。

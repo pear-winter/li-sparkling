@@ -22,7 +22,7 @@ const errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.goto(url);await page.waitForFunction(()=>window.__liSparkling);
  await page.locator('#lpx-panel button').click();await page.getByRole('combobox',{name:'选择特效分组'}).selectOption('pear');
- assert.equal(await page.locator('.lpx-card').count(),24,'two old, nineteen pear text effects, rabbit/carrot');
+ assert.equal(await page.locator('.lpx-card').count(),27,'two old, nineteen pear text effects, rabbit/carrot');
  for(const id of ['lili-pear','lili-pear-garden']){
   const spawned=await page.locator(`[data-effect-id="${id}"] .lpx-thumb`).evaluate(b=>{b.click();return window.__liSparkling.getDiagnostics().particles;});
   const out=await page.evaluate(()=>window.__liSparkling.exportPack());assert.equal(out.packs[0].sparkles,true);
@@ -57,7 +57,7 @@ try{
  const diag=await page.evaluate(()=>window.__liSparkling.getDiagnostics());assert.equal(diag.trail,'pear-emoji');assert(diag.trails>0&&diag.trails<=80);
  await page.reload();await page.waitForFunction(()=>window.__liSparkling);assert.equal(await page.evaluate(()=>window.__liSparkling.getDiagnostics().trail),'pear-emoji');
  // Deterministic visual contact sheet; actual effects drawn on both backgrounds.
- await page.setViewportSize({width:1000,height:1680});
+ await page.setViewportSize({width:1000,height:1920});
  await page.evaluate(async()=>{
   window.__liSparkling.destroy();document.body.replaceChildren();document.body.style='margin:0;background:#cbd0c5';
   const {textPacks,spawnText,drawTextParticle,drawPearTrail,preparePearEmoji}=await import('/pear-effects.js');

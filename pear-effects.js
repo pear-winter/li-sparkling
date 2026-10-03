@@ -1,6 +1,7 @@
 import { drawMotif } from './ornaments.js';
 // Built-in bitmap lettering: no remote font, no missing Chinese glyph on phones.
 const glyphs={
+ '…':['00000000000','00000000000','00000000000','00000000000','00000000000','11001100110','11001100110'],
  '？':['01110','10001','00001','00010','00100','00000','00100'],
  S:['01111','10000','10000','01110','00001','00001','11110'],
 "野":["0011111101111110", "0010100100000010", "0010100100100100", "0011111100011000", "0010100100001000", "0010100101111111", "0011111100001001", "0000100000001010", "0000100000001000", "0011111100001000", "0000100000001000", "0000100000001000", "0000111100001000", "0111000001110000", "0000000000000000", "0000000000000000"],
@@ -40,6 +41,7 @@ const glyphs={
  ],
 };
 export const textPacks=[
+ {id:'lili-pixel-ellipsis',name:'… · 红白像素省略号',label:'…',companions:'spark',colors:['#ef404b','#ffffff'],size:30},
 {"id": "lili-pear-word-pink", "name": "梨 · 浅粉像素字", "label": "梨", "companions": "pear-tint", "colors": ["#f4b6cf", "#ffffff"], "size": 48},
 {"id": "lili-pear-word-yellow", "name": "梨 · 浅黄像素字", "label": "梨", "companions": "pear-tint", "colors": ["#f5dfa0", "#ffffff"], "size": 48},
 {"id": "lili-pear-word-mono", "name": "梨 · 黑白像素字", "label": "梨", "companions": "pear-tint", "colors": ["#111111", "#ffffff"], "size": 48},
@@ -63,6 +65,7 @@ export const textPacks=[
  {id:'lili-pear-love',name:'爱 · 白粉像素字与小爱心',label:'爱',companions:'sprite',images:['heart.png'],colors:['#ffffff','#f4a7cc'],size:48},
 ].map(p=>({...p,motion:'pixel-text',images:(p.images||[]).map(f=>new URL('./assets/'+f,import.meta.url).href),count:6,duration:2100,spread:95,lift:65,shape:'square',glow:0}));
 export const pearTrail={id:'pear-emoji',name:'🍐 · 小梨与闪闪粒子',motif:'pear-emoji',colors:['#acd35d','#ffffff','#e8ed9b'],glow:0};
+export const pinkPearTrail={...pearTrail,id:'pear-pink',name:'粉色🍐 · 小梨与闪闪粒子',motif:'pear-pink',colors:['#f3a6c6','#ffffff','#ffdbe9']};
 export const supportedLabels=textPacks.map(p=>p.label);
 export function textMetrics(label,height){
  const tall=[...label].some(c=>(glyphs[c]?.length||0)>7);
@@ -81,11 +84,11 @@ export function drawPixelLabel(ctx,label,height,colors){
 // Local Twemoji 🍐 sprite (CC BY 4.0); native emoji while its image decodes.
 // This also keeps pears visible on browsers with no installed emoji font.
 const emojiCache=new WeakMap();
-function pearImage(doc){
- if(emojiCache.has(doc))return emojiCache.get(doc);
+function pearImage(doc,pink=false){
+ let cache=emojiCache.get(doc);if(!cache){cache=new Map();emojiCache.set(doc,cache);}if(cache.has(pink))return cache.get(pink);
  const image=doc.createElement('img'),record={image,ready:false,promise:null};
  record.promise=new Promise(resolve=>{image.onload=()=>{record.ready=true;resolve();};image.onerror=()=>resolve();});
- image.src=new URL('./assets/pear-emoji.svg',import.meta.url).href;emojiCache.set(doc,record);return record;
+ image.src=new URL(pink?'./assets/pear-pink.svg':'./assets/pear-emoji.svg',import.meta.url).href;cache.set(pink,record);return record;
 }
 const decorationCache=new WeakMap();
 function decorationImage(doc,src){
@@ -93,10 +96,11 @@ function decorationImage(doc,src){
  const image=doc.createElement('img'),record={image,ready:false};record.promise=new Promise(resolve=>{image.onload=()=>{record.ready=true;resolve();};image.onerror=()=>resolve();});cache.set(src,record);image.src=src;return record;
 }
 export function prepareTextImages(doc,pack){return Promise.all(pack.images.map(src=>decorationImage(doc,src).promise));}
-export function preparePearEmoji(doc){return Promise.all([pearImage(doc).promise,...textPacks.map(p=>prepareTextImages(doc,p))]);}
-export function drawPearEmoji(ctx,size){
- const record=pearImage(ctx.canvas.ownerDocument);
+export function preparePearEmoji(doc){return Promise.all([pearImage(doc).promise,pearImage(doc,true).promise,...textPacks.map(p=>prepareTextImages(doc,p))]);}
+export function drawPearEmoji(ctx,size,pink=false){
+ const record=pearImage(ctx.canvas.ownerDocument,pink);
  if(record.ready){ctx.drawImage(record.image,-size/2,-size/2,size,size);return;}
+ if(pink){drawMotif(ctx,'pear',size,'#f3a6c6');return;}
  ctx.save();ctx.font=`${size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🍐',0,0);ctx.restore();
 }
 // Paired fore/hind wings flap together; solid silhouette with small antennae.
@@ -139,7 +143,7 @@ export function drawTextParticle(ctx,p,now){
 }
 export function drawPearTrail(ctx,p,now){
  const t=(now-p.time)/p.duration;if(t<0||t>=1)return;
- ctx.save();ctx.globalAlpha=Math.pow(1-t,1.3);ctx.translate(p.x+Math.sin(p.phase+t*4)*4*p.size,p.y-14*t*p.size);ctx.rotate(Math.sin(p.phase+t*3)*.2);drawPearEmoji(ctx,20*p.size*(1-t*.2));ctx.restore();
+ ctx.save();ctx.globalAlpha=Math.pow(1-t,1.3);ctx.translate(p.x+Math.sin(p.phase+t*4)*4*p.size,p.y-14*t*p.size);ctx.rotate(Math.sin(p.phase+t*3)*.2);drawPearEmoji(ctx,20*p.size*(1-t*.2),p.motif==='pear-pink');ctx.restore();
  // One pear per sample, with small square sparks instead of a dense emoji wall.
  for(let i=0;i<Math.min(5,p.amount+1);i++){
   const a=p.phase+i*2.4,r=(7+13*t)*p.size,s=(1.2+i%2)*p.size;
