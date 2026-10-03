@@ -22,7 +22,7 @@ const errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.goto(url);await page.waitForFunction(()=>window.__liliPixelV2?.getDiagnostics().canvasReady);
  await page.locator('#lpx-panel button').click();
- assert.equal(await page.locator('.lpx-card').count(),67,'67 builtins');
+ assert.equal(await page.locator('.lpx-card').count(),69,'69 builtins');
  assert.equal(await page.evaluate(()=>document.querySelector('dialog').scrollWidth<=document.querySelector('dialog').clientWidth),true,'no horizontal overflow');
  // Load all textures independently; a single broken SVG/WebP must fail the test.
  const assets=await page.evaluate(async()=>{const {ASSETS,butterflyPacks}=await import('/assets.js');const {seasonalPacks}=await import('/seasonal.js');const srcs=[...new Set([...Object.values(ASSETS),...[...butterflyPacks,...seasonalPacks].flatMap(p=>p.images)])];await Promise.all(srcs.map(src=>{const img=new Image();img.src=src;return img.decode();}));return srcs.length;});
@@ -126,6 +126,6 @@ try{
  });
  await page.screenshot({path:path.join(artifacts,'builtin-preview.png'),fullPage:true});
  assert.deepEqual(errors,[]);
- console.log(`PASS: 67 builtins + groups + ripples + petal retirement; ${assets} local assets; mobile layout; new click/trail modes; centered diffusion; portable paired colors; export/import; legacy settings; menu recovery; touch/iframe; trails; lifecycle.\nArtifacts: ${artifacts}`);
+ console.log(`PASS: 69 builtins + groups + ripples + petal retirement; ${assets} local assets; mobile layout; new click/trail modes; centered diffusion; portable paired colors; export/import; legacy settings; menu recovery; touch/iframe; trails; lifecycle.\nArtifacts: ${artifacts}`);
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
 

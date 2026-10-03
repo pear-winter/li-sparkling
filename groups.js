@@ -1,11 +1,12 @@
 // Group membership belongs to the user's library, not the effect artwork.
 export const ungrouped = 'ungrouped';
 const defaults = [
- ['stars','星星与星屑'],['flowers','蓝色小花'],['hearts','爱心与闪光'],['pixels','像素粒子'],['butterflies','蝴蝶'],
+ ['manga','日文漫画'],['stars','星星与星屑'],['flowers','蓝色小花'],['hearts','爱心与闪光'],['pixels','像素粒子'],['butterflies','蝴蝶'],
  ['bubbles','泡泡'],['music','音符'],['snow','雪花'],['rain','雨滴涟漪'],
  ['neon','霓虹'],['pear','梨梨与黄绿'],[ungrouped,'未分组'],
 ].map(([id,name])=>({id,name}));
 function automatic(pack){
+ if(pack.motion==='manga')return 'manga';
  if(pack.id.startsWith('lili-pixel-'))return 'pixels';
  if(pack.motion==='fireworks')return 'stars';
  if(pack.motion==='orbit-heart')return 'hearts';
@@ -25,13 +26,14 @@ function automatic(pack){
  return ungrouped;
 }
 export function createGroups(saved, save){
- const valid=[1,2].includes(saved?.version)&&Array.isArray(saved.groups);
- let state={version:2,groups:valid?saved.groups.filter(g=>g&&/^[a-z0-9_-]{1,64}$/.test(g.id)&&typeof g.name==='string'&&g.name.trim()).slice(0,30).map(g=>({id:g.id,name:g.name.slice(0,20)})):defaults.map(g=>({...g})),assignments:{}};
+ const valid=[1,2,3].includes(saved?.version)&&Array.isArray(saved.groups);
+ let state={version:3,groups:valid?saved.groups.filter(g=>g&&/^[a-z0-9_-]{1,64}$/.test(g.id)&&typeof g.name==='string'&&g.name.trim()).slice(0,30).map(g=>({id:g.id,name:g.name.slice(0,20)})):defaults.map(g=>({...g})),assignments:{}};
  if(valid&&saved.version===1)for(const g of defaults.filter(g=>['stars','flowers'].includes(g.id)))if(!state.groups.some(v=>v.id===g.id))state.groups.push({...g});
+ if(valid&&saved.version<3&&!state.groups.some(g=>g.id==='manga'))state.groups.push({id:'manga',name:'日文漫画'});
  state.groups=state.groups.filter((g,i,a)=>a.findIndex(v=>v.id===g.id)===i);
  if(!state.groups.some(g=>g.id===ungrouped))state.groups.push({id:ungrouped,name:'未分组'});
  if(saved?.assignments&&typeof saved.assignments==='object')for(const [id,group]of Object.entries(saved.assignments))if(/^[\w-]{1,100}$/.test(id)&&state.groups.some(g=>g.id===group))state.assignments[id]=group;
- if(valid&&saved.version===1)save(state);
+ if(valid&&saved.version<3)save(state);
  const commit=next=>{if(!save(next))throw Error('分组保存失败，请检查浏览器存储空间。');state=next;};
  const nameFor=(name,except)=>{name=String(name).trim();if(!name||name.length>20)throw Error('组名需要 1～20 个字。');if(state.groups.some(g=>g.id!==except&&g.name===name))throw Error('已经有同名分组啦。');return name;};
  const api={

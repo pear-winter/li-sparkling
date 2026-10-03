@@ -20,7 +20,7 @@ const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||u
 const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1,hasTouch:true,isMobile:true});
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
- await page.goto(url);await page.waitForFunction(()=>window.__liSparkling);await page.locator('#lpx-panel button').click();await page.locator('[data-effect-id="lili-wave-white"] .lpx-thumb').click();const pair=page.getByRole('combobox',{name:'叠加第二款点击特效'});assert.equal(await pair.locator('option').count(),67);
+ await page.goto(url);await page.waitForFunction(()=>window.__liSparkling);await page.locator('#lpx-panel button').click();await page.locator('[data-effect-id="lili-wave-white"] .lpx-thumb').click();const pair=page.getByRole('combobox',{name:'叠加第二款点击特效'});assert.equal(await pair.locator('option').count(),69);
  await pair.selectOption('lili-pear-word');
  const added=await page.locator('[data-effect-id="lili-wave-white"] .lpx-thumb').evaluate(b=>{const before=window.__liSparkling.getDiagnostics().particles;b.click();const d=window.__liSparkling.getDiagnostics();return {delta:d.particles-before,active:d.activePacks};});assert.equal(added.delta,13,'one wave plus text, companions and dust');assert.deepEqual(added.active,['lili-wave-white','lili-pear-word']);
  await page.reload();await page.waitForFunction(()=>window.__liSparkling);assert.deepEqual(await page.evaluate(()=>window.__liSparkling.getDiagnostics().activePacks),added.active);await page.locator('#lpx-panel button').click();assert.equal(await pair.inputValue(),'lili-pear-word');
