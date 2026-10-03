@@ -150,3 +150,13 @@ export function drawPearTrail(ctx,p,now){
   ctx.save();ctx.globalAlpha=Math.pow(1-t,1.5)*(.5+.5*Math.sin(t*12+a)**2);ctx.fillStyle=p.colors[i%p.colors.length];ctx.fillRect(p.x+Math.cos(a)*r,p.y+Math.sin(a)*r-8*t*p.size,s,s);ctx.restore();
  }
 }
+
+export const pixelTrails=[
+ {id:'pixel-pear-green',name:'梨 · 绿色像素字拖尾',motif:'pixel-pear',colors:['#a9cf56','#ffffff','#d2ed96'],glow:0},
+ {id:'pixel-grass-green',name:'草 · 绿色像素字拖尾',motif:'pixel-grass',colors:['#85c75c','#ffffff','#c4e9a5'],glow:0},
+];
+export function drawPixelTrail(ctx,p,now){
+ const t=(now-p.time)/p.duration;if(t<0||t>=1)return;
+ ctx.save();ctx.globalAlpha=Math.pow(1-t,1.25);ctx.translate(p.x+Math.sin(p.phase+t*4)*3*p.size,p.y-15*t*p.size);drawPixelLabel(ctx,p.motif==='pixel-grass'?'草':'梨',22*p.size,p.colors);ctx.restore();
+ for(let i=0;i<Math.min(5,p.amount+1);i++){const a=p.phase+i*2.4,r=(12+9*t)*p.size,s=(1+i%2)*p.size;ctx.save();ctx.globalAlpha=Math.pow(1-t,1.4);ctx.fillStyle=p.colors[i%p.colors.length];ctx.fillRect(p.x+Math.cos(a)*r,p.y+Math.sin(a)*r-12*t*p.size,s,s);ctx.restore();}
+}

@@ -52,7 +52,7 @@ try{
   assert.equal(await page.evaluate(d=>window.__liSparkling.importPacks(d),pack),1);
   if(id==='lili-bf-pear-yellow'){assert(pack.packs[0].paired);assert(pack.packs[0].hues.every(h=>h===0));assert(pack.packs[0].images.every(s=>s.startsWith('data:image/png;base64,')));}
  }
- await page.getByRole('tab',{name:'02 · 拖尾'}).click();assert.equal(await page.locator('[data-trail-id]').count(),24);
+ await page.getByRole('tab',{name:'02 · 拖尾'}).click();assert.equal(await page.locator('[data-trail-id]').count(),26);
  await page.waitForTimeout(3600);
  for(const id of ['bubble','stars-black','stars-white','water','hearts-pink','stars-gold','flowers-blue']){
   await page.locator(`[data-trail-id="${id}"] .lpx-thumb`).click();
