@@ -1,6 +1,7 @@
 import { drawMotif } from './ornaments.js';
 // Built-in bitmap lettering: no remote font, no missing Chinese glyph on phones.
 const glyphs={
+ '？':['01110','10001','00001','00010','00100','00000','00100'],
  S:['01111','10000','10000','01110','00001','00001','11110'],
 "野":["0011111101111110", "0010100100000010", "0010100100100100", "0011111100011000", "0010100100001000", "0010100101111111", "0011111100001001", "0000100000001010", "0000100000001000", "0011111100001000", "0000100000001000", "0000100000001000", "0000111100001000", "0111000001110000", "0000000000000000", "0000000000000000"],
 "陈":["1111100010000000", "1000100010000000", "1001011111111110", "1001000100000000", "1010001000000000", "1001001001000000", "1001010001000000", "1001011111111100", "1000100001000000", "1000100001000000", "1011000101010000", "1000000101001000", "1000001001000100", "1000010001000010", "1000000101000000", "1000000010000000"],
@@ -39,6 +40,14 @@ const glyphs={
  ],
 };
 export const textPacks=[
+{"id": "lili-pear-word-pink", "name": "梨 · 浅粉像素字", "label": "梨", "companions": "pear-tint", "colors": ["#f4b6cf", "#ffffff"], "size": 48},
+{"id": "lili-pear-word-yellow", "name": "梨 · 浅黄像素字", "label": "梨", "companions": "pear-tint", "colors": ["#f5dfa0", "#ffffff"], "size": 48},
+{"id": "lili-pear-word-mono", "name": "梨 · 黑白像素字", "label": "梨", "companions": "pear-tint", "colors": ["#111111", "#ffffff"], "size": 48},
+{"id": "lili-pear-ririshiko-pink", "name": "Ririshiko♪ · 浅粉像素字", "label": "Ririshiko♪", "companions": "butterfly", "colors": ["#f4b6cf", "#ffffff"], "size": 25},
+{"id": "lili-pear-ririshiko-yellow", "name": "Ririshiko♪ · 浅黄像素字", "label": "Ririshiko♪", "companions": "butterfly", "colors": ["#f5dfa0", "#ffffff"], "size": 25},
+{"id": "lili-pear-ririshiko-green", "name": "Ririshiko♪ · 梨绿像素字", "label": "Ririshiko♪", "companions": "butterfly", "colors": ["#a9cf56", "#ffffff"], "size": 25},
+{"id": "lili-pixel-exclamation", "name": "！ · 红白像素符号", "label": "！", "companions": "spark", "colors": ["#ef404b", "#ffffff"], "size": 46},
+{"id": "lili-pixel-question", "name": "？ · 红白像素符号", "label": "？", "companions": "spark", "colors": ["#ef404b", "#ffffff"], "size": 46},
  {id:'lili-pear-shiro',name:'Shiro！ · 白黑像素字与十字架',label:'Shiro！',companions:'cross',colors:['#ffffff','#111111'],size:30},
 {"id": "lili-pear-chenye", "name": "陈野！ · 像素字与叠色十字架", "label": "陈野！", "companions": "cross", "motion": "pixel-text", "colors": ["#111111", "#e52d40"], "images": [], "count": 6, "size": 46, "duration": 2300, "spread": 95, "lift": 65, "shape": "square", "glow": 0},
 {"id": "lili-pear-shirakawa", "name": "白川！ · 像素字与叠色十字架", "label": "白川！", "companions": "cross", "motion": "pixel-text", "colors": ["#111111", "#ffffff"], "images": [], "count": 6, "size": 46, "duration": 2300, "spread": 95, "lift": 65, "shape": "square", "glow": 0},
@@ -119,6 +128,8 @@ export function drawTextParticle(ctx,p,now){
   ctx.translate(p.x+p.dx*(1+.1*spread)+sway*5,p.y+p.dy*spread);
   if(p.role==='butterfly'){ctx.rotate(Math.sin(t*6+p.phase)*.2);butterfly(ctx,p.size,p.color,t*20+p.phase);}
   else if(p.role==='sprite'&&p.src){const r=decorationImage(ctx.canvas.ownerDocument,p.src);if(r.ready){ctx.rotate(Math.sin(t*5+p.phase)*.2);ctx.imageSmoothingEnabled=false;const w=r.image.naturalWidth,h=r.image.naturalHeight,k=p.size/Math.max(w,h);ctx.drawImage(r.image,-w*k/2,-h*k/2,w*k,h*k);}}
+  else if(p.role==='pear-tint'){ctx.rotate(Math.sin(t*5+p.phase)*.2);drawMotif(ctx,'pear',p.size,p.color);ctx.strokeStyle=p.colors[0];ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(0,-p.size*.35);ctx.lineTo(2,-p.size*.6);ctx.stroke();}
+  else if(p.role==='spark'){ctx.rotate(p.phase+t);drawMotif(ctx,'star',p.size*.65,p.color);}
   else if(p.role==='cross'){ctx.rotate(Math.sin(t*5+p.phase)*.18);const u=p.size/13;ctx.scale(u,u);for(const [color,d]of [[p.colors[1],1.5],[p.colors[0],0]]){ctx.fillStyle=color;ctx.fillRect(-1.5+d,-8+d,3,16);ctx.fillRect(-5.5+d,-3+d,11,3);}}
   else if(p.role==='flower'){ctx.rotate(p.phase+t*.9);drawMotif(ctx,'flower',p.size,p.colors[1]);}
   else if(p.role==='leaf'){ctx.rotate(t*1.8+p.phase);ctx.scale(p.size/22,p.size/22);ctx.fillStyle=p.color;ctx.beginPath();ctx.moveTo(-10,7);ctx.quadraticCurveTo(-12,-9,10,-8);ctx.quadraticCurveTo(12,8,-10,7);ctx.fill();ctx.strokeStyle='#609542';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(-10,7);ctx.lineTo(7,-6);ctx.stroke();}

@@ -22,18 +22,20 @@ const errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.goto(url);await page.waitForFunction(()=>window.__liSparkling);
  await page.locator('#lpx-panel button').click();await page.getByRole('combobox',{name:'选择特效分组'}).selectOption('pear');
- assert.equal(await page.locator('.lpx-card').count(),16,'two old, thirteen text effects, rabbit/carrot');
+ assert.equal(await page.locator('.lpx-card').count(),24,'two old, nineteen pear text effects, rabbit/carrot');
  for(const id of ['lili-pear','lili-pear-garden']){
-  await page.locator(`[data-effect-id="${id}"] .lpx-thumb`).click();
+  const spawned=await page.locator(`[data-effect-id="${id}"] .lpx-thumb`).evaluate(b=>{b.click();return window.__liSparkling.getDiagnostics().particles;});
   const out=await page.evaluate(()=>window.__liSparkling.exportPack());assert.equal(out.packs[0].sparkles,true);
-  assert((await page.evaluate(()=>window.__liSparkling.getDiagnostics().particles))>=13,'six motifs plus seven small sparks');
+  assert(spawned>=13,'six motifs plus seven small sparks');
  }
+ await page.getByRole('combobox',{name:'选择特效分组'}).selectOption('all');
  for(const [id,label,companions] of await page.evaluate(async()=> (await import('/pear-effects.js')).textPacks.map(p=>[p.id,p.label,p.companions]))){
   await page.locator(`[data-effect-id="${id}"] .lpx-thumb`).click();
   const out=await page.evaluate(()=>window.__liSparkling.exportPack());assert.equal(out.packs[0].label,label);assert.equal(out.packs[0].companions,companions);
   assert.equal(await page.evaluate(d=>window.__liSparkling.importPacks(d),out),1);
   const back=await page.evaluate(()=>window.__liSparkling.exportPack());assert.equal(back.packs[0].label,label);assert.deepEqual(back.packs[0].colors,out.packs[0].colors);
   const bad=structuredClone(out);bad.packs[0].label='missing glyph';assert.equal(await page.evaluate(d=>{try{window.__liSparkling.importPacks(d);return false;}catch{return true;}},bad),true);
+  await page.evaluate(id=>window.__liSparkling.deletePack(id),back.packs[0].id);
  }
  const checks=await page.evaluate(async()=>{
   const {textPacks,spawnText,drawPixelLabel,textMetrics,drawTextParticle,drawPearTrail,preparePearEmoji}=await import('/pear-effects.js');
@@ -55,13 +57,13 @@ try{
  const diag=await page.evaluate(()=>window.__liSparkling.getDiagnostics());assert.equal(diag.trail,'pear-emoji');assert(diag.trails>0&&diag.trails<=80);
  await page.reload();await page.waitForFunction(()=>window.__liSparkling);assert.equal(await page.evaluate(()=>window.__liSparkling.getDiagnostics().trail),'pear-emoji');
  // Deterministic visual contact sheet; actual effects drawn on both backgrounds.
- await page.setViewportSize({width:1000,height:760});
+ await page.setViewportSize({width:1000,height:1680});
  await page.evaluate(async()=>{
   window.__liSparkling.destroy();document.body.replaceChildren();document.body.style='margin:0;background:#cbd0c5';
   const {textPacks,spawnText,drawTextParticle,drawPearTrail,preparePearEmoji}=await import('/pear-effects.js');
-  const c=document.createElement('canvas');c.width=1000;c.height=760;document.body.append(c);const ctx=c.getContext('2d');
+  const c=document.createElement('canvas');c.width=1000;c.height=Math.ceil(textPacks.length/3)*240;document.body.append(c);const ctx=c.getContext('2d');
   await preparePearEmoji(document);
-  for(let i=0;i<textPacks.length;i++){const x=(i%3)*333,y=Math.floor(i/3)*240;ctx.fillStyle='#f4f5e9';ctx.fillRect(x,y,166,240);ctx.fillStyle='#172330';ctx.fillRect(x+166,y,167,240);for(const q of spawnText(textPacks[i],x+166,y+145,6,0,1.1,false,1000,760))drawTextParticle(ctx,q,600);}
+  for(let i=0;i<textPacks.length;i++){const x=(i%3)*333,y=Math.floor(i/3)*240;ctx.fillStyle='#f4f5e9';ctx.fillRect(x,y,166,240);ctx.fillStyle='#172330';ctx.fillRect(x+166,y,167,240);for(const q of spawnText(textPacks[i],x+166,y+145,6,0,1.1,false,1000,c.height))drawTextParticle(ctx,q,600);}
 
  });
  await page.screenshot({path:path.join(artifacts,'pear-pixel-effects.png')});

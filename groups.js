@@ -6,6 +6,9 @@ const defaults = [
  ['neon','霓虹'],['pear','梨梨与黄绿'],[ungrouped,'未分组'],
 ].map(([id,name])=>({id,name}));
 function automatic(pack){
+ if(pack.id.startsWith('lili-pixel-'))return 'pixels';
+ if(pack.motion==='fireworks')return 'stars';
+ if(pack.motion==='orbit-heart')return 'hearts';
  if(pack.motion==='pixel-text')return 'pear';
  if(pack.id==='lili-gold-stars'||pack.motion==='glitter'||pack.id==='lili-mono-stars'||pack.id==='lili-stars')return 'stars';
  if(pack.motion==='blossom')return 'flowers';
