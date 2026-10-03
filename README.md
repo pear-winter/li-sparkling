@@ -1,6 +1,6 @@
 # 梨梨 · 点击与拖尾特效
 
-SillyTavern 原生前端扩展，版本 **2.11.0**。点击绽放小图案，滑动留下细细的拖尾；手机触屏和电脑鼠标都可用。
+SillyTavern 原生前端扩展，版本 **2.12.0**。点击绽放小图案，滑动留下细细的拖尾；手机触屏和电脑鼠标都可用。
 
 ## 安装
 
@@ -20,7 +20,7 @@ https://github.com/pear-winter/li-sparkling
 
 ## 内置特效
 
-共 **69 款点击特效 + 26 组拖尾**。
+共 **73 款点击特效 + 30 组拖尾**。
 
 | 类别 | 款式与表现 |
 | --- | --- |
@@ -197,3 +197,12 @@ python3 scripts/generate-seasonal.py
 - 漫画字使用随扩展安装的 Yusei Magic 字体子集（SIL OFL，见 assets/YuseiMagic-LICENSE.txt），避免手机缺少日文字形；运行时无需联网下载。
 
 ![日文漫画黑白与粉白效果预览](docs/manga-preview.png)
+
+## 2.12.0 更新
+
+- 无框手写拟声词：日文、中文各有黑白和粉白两款；随机竖排／横排，字形大小错落，带小爱心和轻微抖动线。
+- 四款手写字各有独立拖尾，沿轨迹间隔发射，支持任意两款拖尾叠加；省电模式降低发射频率。
+- 原对白框版本默认大小由 64 调整为 54（缩小约 16%），保留爱心，增加轻抖动。
+- 中文使用随扩展安装的 Ma Shan Zheng 手写字体子集（SIL OFL，见 assets/MaShanZheng-LICENSE.txt），日文使用 Yusei Magic；参考图仅用于风格观察，不使用截图和水印素材。
+
+![中日文手写字与拖尾](docs/handwritten-preview.png)
