@@ -22,7 +22,7 @@ const errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
  await page.goto(url);await page.waitForFunction(()=>window.__liSparkling);
  await page.locator('#lpx-panel button').click();await page.getByRole('combobox',{name:'选择特效分组'}).selectOption('pear');
- assert.equal(await page.locator('.lpx-card').count(),15,'two old, twelve text effects, rabbit/carrot');
+ assert.equal(await page.locator('.lpx-card').count(),16,'two old, thirteen text effects, rabbit/carrot');
  for(const id of ['lili-pear','lili-pear-garden']){
   await page.locator(`[data-effect-id="${id}"] .lpx-thumb`).click();
   const out=await page.evaluate(()=>window.__liSparkling.exportPack());assert.equal(out.packs[0].sparkles,true);

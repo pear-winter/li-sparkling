@@ -1,3 +1,4 @@
+import { createOrdering } from './ordering.js';
 import { butterflyTrails, makeButterflyTrail, drawButterflyTrail } from './butterfly-trails.js';
 import { textPacks, pearTrail, preparePearEmoji, prepareTextImages, supportedLabels, spawnText, drawTextParticle, drawPearEmoji, drawPearTrail } from './pear-effects.js';
 import { clearWaterCache } from './water.js';
@@ -68,6 +69,8 @@ let hiddenBuiltins=parse(read('lili-fx-hidden-v1'),[]);if(!Array.isArray(hiddenB
 let builtinNames=parse(read('lili-fx-names-v1'),{});if(!builtinNames||typeof builtinNames!=='object'||Array.isArray(builtinNames))builtinNames={};
 const allPacks=()=>[...packsDefault.filter(p=>!hiddenBuiltins.includes(p.id)&&!custom.some(c=>c.id===p.id)).map(p=>({...p,name:typeof builtinNames[p.id]==='string'?builtinNames[p.id].slice(0,60):p.name})),...custom];
 const groups=createGroups(parse(read('lili-fx-groups-v1'),null),value=>write('lili-fx-groups-v1',JSON.stringify(value)));
+const clickOrder=createOrdering(parse(read('lili-fx-click-order-v1'),null),v=>write('lili-fx-click-order-v1',JSON.stringify(v)));
+const trailOrder=createOrdering(parse(read('lili-fx-trail-order-v1'),null),v=>write('lili-fx-trail-order-v1',JSON.stringify(v)));
 const selected=()=>allPacks().find(p=>p.id===prefs.selected)||allPacks()[0]||{...packsDefault[0],id:'',name:'暂无特效',images:[],count:0};
 prefs.amount=Math.max(2,Math.min(14,Number(prefs.amount)||6));
 const trailPacks=[
@@ -305,6 +308,13 @@ function openManager(page='gallery',container=null){
  function tell(text){notice.textContent=text;}
  function show(which){if(which==='upload')which='settings';currentPage=which;galleryTab.setAttribute('aria-selected',String(which==='gallery'));trailTab.setAttribute('aria-selected',String(which==='trails'));uploadTab.setAttribute('aria-selected',String(which==='settings'));body.replaceChildren();if(which==='settings')renderUpload();else if(which==='trails')renderTrails();else renderGallery();}
  managerUI={show};
+ function orderControls(p,model,items,visible,pin,refresh){
+  const row=el('div','lpx-order-controls'),liked=model.favorite(p.id);
+  const act=fn=>{try{fn();const y=body.scrollTop;refresh();body.scrollTop=y;}catch(e){tell(e.message);}};
+  const fav=button('',()=>act(()=>model.toggle(p.id)),'lpx-btn lpx-favorite');fav.setAttribute('aria-label',(liked?'取消收藏 ':'收藏 ')+p.name);fav.setAttribute('aria-pressed',String(liked));fav.title=liked?'取消收藏':'收藏并置顶';const heart=el('img');heart.src=new URL('./assets/heart.png',import.meta.url).href;heart.alt='';fav.append(heart);row.append(fav);
+  for(const [delta,text,label]of [[-1,'↑','上移 '],[1,'↓','下移 ']]){const b=button(text,()=>act(()=>model.move(items,visible,p.id,delta,pin)),'lpx-btn lpx-order-move');b.setAttribute('aria-label',label+p.name);b.title=label.trim();b.disabled=!model.canMove(visible,p.id,delta,pin);row.append(b);}
+  return row;
+ }
  function renderGallery(){
   const toolbar=el('div','lpx-gallery-tools'),search=el('input','lpx-input');search.type='search';search.placeholder='搜索当前分组…';search.setAttribute('aria-label','搜索特效');search.value=query;
   toolbar.append(search,button('＋ 添加',()=>show('upload')));body.append(toolbar);
@@ -318,20 +328,20 @@ function openManager(page='gallery',container=null){
   const remove=button('删除当前组',()=>{try{groups.remove(groupFilter,allPacks());groupFilter='ungrouped';saveFilter();refresh();tell('分组已删除，里面的特效保留在未分组。');}catch(e){tell(e.message);}});
   groupActions.append(create,rename,remove);editor.append(groupName,groupActions,el('p','lpx-muted','选好分组后可改名或删除；删除分组不会删除特效。'));manage.append(editor);
   const bar=el('div','lpx-gallery-switch'),on=el('label','lpx-row'),toggle=el('input');toggle.type='checkbox';toggle.checked=!!prefs.enabled;on.append(toggle,doc.createTextNode('点击特效'));listen(toggle,'change',()=>{prefs.enabled=toggle.checked;persist();updateStatus();});bar.append(on,el('span','lpx-count'));body.append(bar);
-  const grid=el('div','lpx-gallery');body.append(grid);
+  body.append(el('p','lpx-muted','小爱心收藏置顶；↑↓ 调整收藏或未收藏项目的顺序。梨梨组的「梨」固定第一。'));const grid=el('div','lpx-gallery');body.append(grid);
   const saveFilter=()=>{prefs.galleryGroup=groupFilter;persist();};
   const refresh=()=>{
    if(groupFilter!=='all'&&!groups.has(groupFilter))groupFilter='all';
    const all=allPacks();filter.replaceChildren();const addOption=(id,label)=>{const o=el('option',null,label);o.value=id;filter.append(o);};
    addOption('all','全部特效 · '+all.length);for(const g of groups.list())addOption(g.id,g.name+' · '+all.filter(p=>groups.of(p)===g.id).length);filter.value=groupFilter;
    rename.disabled=remove.disabled=groupFilter==='all'||groupFilter==='ungrouped';
-   grid.replaceChildren();const packs=all.filter(p=>(groupFilter==='all'||groups.of(p)===groupFilter)&&p.name.toLocaleLowerCase().includes(query.toLocaleLowerCase().trim()));
+   grid.replaceChildren();const pin=groupFilter==='pear'?'lili-pear-word':null;const packs=clickOrder.sort(all.filter(p=>(groupFilter==='all'||groups.of(p)===groupFilter)&&p.name.toLocaleLowerCase().includes(query.toLocaleLowerCase().trim())),pin);
    bar.querySelector('.lpx-count').textContent=packs.length+' 款 / 共 '+all.length+' 款';
    if(!packs.length){grid.append(el('p','lpx-empty',query?'没有找到这个名字，换个词试试。':'这个分组还没有特效。到全部特效，用卡片下方的菜单移入吧。'));}
    for(const p of packs){
     const card=el('article','lpx-card'+(selected().id===p.id?' is-selected':''));card.dataset.effectId=p.id;
     const thumb=thumbnail(p,true);listen(thumb,'click',()=>{prefs.selected=p.id;prefs.enabled=true;toggle.checked=true;persist();preload();const r=thumb.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,thumb,true);refresh();tell('正在使用：'+p.name);});card.append(thumb);
-    const title=el('div','lpx-card-title',p.name);title.title=p.name;card.append(title);
+    const title=el('div','lpx-card-title',p.name);title.title=p.name;card.append(title,orderControls(p,clickOrder,all,packs,pin,refresh));
     const membership=el('select','lpx-input lpx-group-select');membership.setAttribute('aria-label','移动 '+p.name+' 到分组');
     for(const g of groups.list()){const o=el('option',null,g.name);o.value=g.id;membership.append(o);}membership.value=groups.of(p);
     listen(membership,'change',()=>{try{groups.move(p,membership.value);refresh();tell('已移动到：'+groups.list().find(g=>g.id===groups.of(p)).name);}catch(e){membership.value=groups.of(p);tell(e.message);}});card.append(membership);
@@ -348,9 +358,9 @@ function openManager(page='gallery',container=null){
  const row=el('label','lpx-row',label+' '),input=el('input'),value=el('span',null,format(prefs[key]));input.type='range';input.min=min;input.max=max;input.step=step;input.value=prefs[key];input.setAttribute('aria-label',label);listen(input,'input',()=>{prefs[key]=Number(input.value);value.textContent=format(prefs[key]);persist();});row.append(input,value);parent.append(row);
  }
  function renderTrails(){
- const row=el('label','lpx-row'),toggle=el('input');toggle.type='checkbox';toggle.checked=!!prefs.trailEnabled;row.append(toggle,doc.createTextNode('滑动拖尾'));listen(toggle,'change',()=>{prefs.trailEnabled=toggle.checked;clearTrail();persist();});body.append(row,el('p','lpx-muted','选一种拖尾，在下方试滑；手机滑动页面时也会留下拖尾。'));
+ const row=el('label','lpx-row'),toggle=el('input');toggle.type='checkbox';toggle.checked=!!prefs.trailEnabled;row.append(toggle,doc.createTextNode('滑动拖尾'));listen(toggle,'change',()=>{prefs.trailEnabled=toggle.checked;clearTrail();persist();});body.append(row,el('p','lpx-muted','选一种拖尾，在下方试滑。点小爱心收藏置顶，↑↓ 调整同类顺序。'));
  const grid=el('div','lpx-gallery');body.append(grid);
- for(const p of trailPacks){const card=el('article','lpx-card'+(selectedTrail().id===p.id?' is-selected':'')),thumb=button('',()=>{prefs.trailSelected=p.id;prefs.trailEnabled=true;clearTrail();persist();show('trails');tell('正在使用：'+p.name);},'lpx-thumb');thumb.setAttribute('aria-label','使用拖尾 '+p.name);thumb.dataset.lpxPreview='true';card.dataset.trailId=p.id;if(p.motif==='butterfly'){thumb.classList.add('lpx-contrast');for(let i=0;i<4;i++){const img=el('img');img.src=p.images[i];img.alt='';img.style.cssText=`left:${12+i*22}%;top:${25+i%2*22}%;filter:hue-rotate(${p.hues?.[i]||0}deg)`;thumb.append(img);}}else if(p.motif){thumb.classList.add('lpx-contrast');thumb.append(motifPreview(p.motif,p.colors));}else for(let i=0;i<3;i++){const line=el('i');line.style.cssText=`position:absolute;left:15%;top:${35+i*13}%;width:70%;height:2px;background:${p.colors[i]};transform:rotate(-12deg);border-radius:99px;box-shadow:0 0 ${p.glow}px ${p.colors[i]}`;thumb.append(line);}card.append(thumb,el('div','lpx-card-title',p.name));grid.append(card);}
+ const orderedTrails=trailOrder.sort(trailPacks);for(const p of orderedTrails){const card=el('article','lpx-card'+(selectedTrail().id===p.id?' is-selected':'')),thumb=button('',()=>{prefs.trailSelected=p.id;prefs.trailEnabled=true;clearTrail();persist();show('trails');tell('正在使用：'+p.name);},'lpx-thumb');thumb.setAttribute('aria-label','使用拖尾 '+p.name);thumb.dataset.lpxPreview='true';card.dataset.trailId=p.id;if(p.motif==='butterfly'){thumb.classList.add('lpx-contrast');for(let i=0;i<4;i++){const img=el('img');img.src=p.images[i];img.alt='';img.style.cssText=`left:${12+i*22}%;top:${25+i%2*22}%;filter:hue-rotate(${p.hues?.[i]||0}deg)`;thumb.append(img);}}else if(p.motif){thumb.classList.add('lpx-contrast');thumb.append(motifPreview(p.motif,p.colors));}else for(let i=0;i<3;i++){const line=el('i');line.style.cssText=`position:absolute;left:15%;top:${35+i*13}%;width:70%;height:2px;background:${p.colors[i]};transform:rotate(-12deg);border-radius:99px;box-shadow:0 0 ${p.glow}px ${p.colors[i]}`;thumb.append(line);}card.append(thumb,el('div','lpx-card-title',p.name),orderControls(p,trailOrder,trailPacks,orderedTrails,null,()=>show('trails')));grid.append(card);}
  const pad=el('div','lpx-trail-pad','在这里滑一滑 ✧');pad.dataset.lpxPreview='true';body.append(pad,button('调整拖尾数量与大小',()=>show('settings')));
  }
  function renderUpload(){
@@ -447,7 +457,7 @@ listen(doc,'visibilitychange',()=>{if(!doc.hidden)recoverEntries();else{particle
 listen(doc,'pointerdown',e=>{if(e.target?.closest?.('#extensionsMenuButton,#extensions-settings-button,#extensionsMenu,#extensions_settings,#extensions_settings2'))recoverEntries();},{capture:true,passive:true});
 listen(doc,'click',e=>{if(e.target?.closest?.('#extensionsMenuButton,#extensions-settings-button'))recoverEntries();},{capture:true,passive:true});
 function destroy(){if(stopped)return;stopped=true;clearWaterCache();clearTrail();particles=[];abort.abort();observer.disconnect();host.clearInterval(interval);timers.forEach(id=>host.clearTimeout(id));if(raf)host.cancelAnimationFrame(raf);if(scanFrame)host.cancelAnimationFrame(scanFrame);closeManager();layer.remove();sheet.remove();panelEntry?.remove();wandEntry?.remove();disposers.forEach(fn=>{try{fn();}catch{}});if(host[KEY]?.destroy===destroy)delete host[KEY];if(host.__liSparkling?.destroy===destroy){delete host.__liSparkling;host.dispatchEvent(new host.Event('li-sparkling:change'));}}
-host[KEY]={owner:'li-sparkling',apiVersion:1,version:'2.6.0',isAvailable:()=>!stopped,mount:container=>openManager('gallery',container),unmount:container=>{if(container&&manager?.parentElement===container)closeManager();},destroy,openManager,importPacks,renamePack,deletePack,exportPack:async()=>({format:'lili-click-effects',version:1,packs:[await portablePack(selected())]}),getDiagnostics:()=>({hits:totalHits,input:lastInput,particles:particles.length,trails:trails.length,trail:selectedTrail().id,trailEnabled:prefs.trailEnabled,canvasReady:!!ctx,theme:themeActive(),pack:selected().id,images:selected().images.map((s,i)=>({ready:loadImage(s,selected().hues?.[i]||0).ready,error:loadImage(s,selected().hues?.[i]||0).error}))})};
+host[KEY]={owner:'li-sparkling',apiVersion:1,version:'2.7.0',isAvailable:()=>!stopped,mount:container=>openManager('gallery',container),unmount:container=>{if(container&&manager?.parentElement===container)closeManager();},destroy,openManager,importPacks,renamePack,deletePack,exportPack:async()=>({format:'lili-click-effects',version:1,packs:[await portablePack(selected())]}),getDiagnostics:()=>({hits:totalHits,input:lastInput,particles:particles.length,trails:trails.length,trail:selectedTrail().id,trailEnabled:prefs.trailEnabled,canvasReady:!!ctx,theme:themeActive(),pack:selected().id,images:selected().images.map((s,i)=>({ready:loadImage(s,selected().hues?.[i]||0).ready,error:loadImage(s,selected().hues?.[i]||0).error}))})};
 host.__liSparkling=host[KEY];
 host.dispatchEvent(new host.Event('li-sparkling:change'));
 if(window!==host){

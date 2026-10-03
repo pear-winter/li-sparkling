@@ -1,10 +1,10 @@
 {
   "name": "li-sparkling",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tests/extension.test.mjs && node tests/workbench.test.mjs && node tests/theme-water.test.mjs && node tests/pear.test.mjs && node tests/butterfly-trails.test.mjs"
+    "test": "node tests/extension.test.mjs && node tests/workbench.test.mjs && node tests/theme-water.test.mjs && node tests/pear.test.mjs && node tests/butterfly-trails.test.mjs && node tests/ordering.test.mjs"
   },
   "devDependencies": {
     "playwright": "1.51.1"
